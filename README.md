@@ -15,12 +15,13 @@ fn tabuada(){
         .read_line(&mut input)
         .expect("Erro ao ler");
         
-    for input in 1..11 {
-        count += 1;
-        println!("{}",count * input);
-    }
-        
-    println!("Você escreveu: {}", input);
+    let numero: i32 = input.trim().parse().expect("Por favor, digite um número válido!");
+    
+    println!("Você escreveu: {}", numero);
+    println!("--- Tabuada do {} ---", numero);
+    
+    for i in 1..11 {
+        println!("{} x {} = {}", numero, i, numero * i);
 }
 
 ```
