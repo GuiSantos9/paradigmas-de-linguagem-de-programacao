@@ -1,4 +1,6 @@
 ```Rust
+use std::io;
+
 fn main () {
     println!("Escolha um número");
     
