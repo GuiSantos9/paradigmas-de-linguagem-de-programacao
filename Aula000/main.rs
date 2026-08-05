@@ -8,7 +8,6 @@ fn main () {
 
 fn tabuada(){
     let mut input = String::new();
-    let mut count = 0;
     
     io::stdin()
         .read_line(&mut input)
