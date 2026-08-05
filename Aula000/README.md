@@ -1,4 +1,14 @@
-## 1. Paradigmas da Linguagem Rust
+## 1. O que é o Rust?
+
+Rust é uma **linguagem de programação de sistemas** compilada, criada inicialmente pela Mozilla Research. Ela foi desenvolvida para oferecer o desempenho de linguagens de baixo nível, como C e C++, mas com um diferencial crucial: **garantir a segurança de memória sem o uso de um Garbage Collector (coletor de lixo)**.
+
+Os principais pilares que definem o que é o Rust incluem:
+*   **Performance Extrema:** Por ser compilada diretamente para código de máquina e não possuir um *runtime* pesado ou *garbage collector*, Rust entrega um desempenho extremamente rápido e previsível, ideal para sistemas críticos.
+*   **Segurança de Memória (Memory Safety):** Rust elimina falhas comuns de segurança (como *null pointer dereferencing*, *buffer overflows* e *dangling pointers*) em tempo de compilação, através de um sistema rigoroso de verificação.
+*   **O Sistema de Ownership:** O grande diferencial do Rust é o seu modelo de *Ownership* (Propriedade) e *Borrowing* (Empréstimo). O compilador gerencia a memória verificando as regras de posse de variáveis, o que evita vazamentos de memória (memory leaks) e corridas de dados (data races) de forma nativa.
+*   **Ecossistema Moderno:** Rust vem com uma ferramenta de gerenciamento de pacotes e build chamada **Cargo**, que facilita imensamente a vida do desenvolvedor para compilar projetos, rodar testes e gerenciar dependências (Crates).
+
+Devido a essas características, Rust tem sido amplamente adotada no desenvolvimento de sistemas operacionais (como o Linux), motores de jogos, ferramentas de linha de comando (CLI), WebAssembly, e infraestrutura de nuvem/criptomoedas.
 
 A linguagem Rust é **multiparadigma**, focada principalmente em segurança de memória, performance e concorrência segura. Ela combina diversos estilos de programação para oferecer ferramentas poderosas aos desenvolvedores:
 
