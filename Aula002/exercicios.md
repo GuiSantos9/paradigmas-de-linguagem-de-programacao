@@ -1,4 +1,4 @@
-Exercícios 9 - 11 baseados no livro Concepts of Programming Languages 11th Edition by Robert Sebesta
+Exercícios 9 - 11 - 12 baseados no livro Concepts of Programming Languages 11th Edition by Robert Sebesta
 
 #### Exercício 9
 
@@ -66,3 +66,43 @@ O contraste entre a linhagem imperativa (representada por ALGOL, Pascal e C) e a
         O computador utiliza um sistema de inferência lógico interno (baseado no princípio de resolução e unificação) para responder a consultas/objetivos de forma automática, buscando correspondências na base de dados.
 
 Enquanto na linhagem imperativa o programador dita as ações passo a passo para alterar estados de memória, no Prolog o programador fornece o conhecimento lógico sobre o problema e deixa que o motor de inferência da linguagem encontre o caminho para a solução.
+
+
+#### Exercício 12:
+
+Pergunta: ***Modele em linguagem natural uma pequena base Prolog com dois fatos, uma regra e uma consulta. Explique por que isso representa programação lógica, não apenas armazenamento de dados.***
+
+- 1. Fatos Lógicos: 
+    - Em linguagem natural:
+        - "Vern é pai de Joana"
+        - "Joana é mão de Jake"
+    - Em prolog:
+    ``father(vern, joanne).``
+    ``mother(joanne, jake).``
+
+- 2. Uma Regra (Cláusula de Horn com Cabeça): 
+    - Em Linguagem Natural: 
+        - "X é avô de Z se X for pai de um indivíduo Y e esse Y for mãe de Z."
+    - Em Prolog:
+        - ``grandparent(X, Z) :- father(X, Y), mother(Y, Z)``
+
+- 3. Uma Consulta (Sentença-Objetivo):
+    - Em Linguagem Natural:
+        - "Vern é avô de Jake?"
+    - Em Prolog:
+        - ``grandparent(vern, jake).``
+
+Essa estrutura representa a programação lógica por três razões fundamentais descritas pelo autor:
+Capacidade de Dedução Ativa (Inferência): Em um sistema convencional de armazenamento de dados (como um SGBD relacional clássico), o sistema só consegue retornar informações que foram explicitamente gravadas nele, pois ele contém apenas fatos isolados
+. Se perguntássemos a um banco de dados tradicional se "Vern é avô de Jake" sem que essa linha exata estivesse escrita nas tabelas, ele diria que não
+. No Prolog, há uma capacidade de dedução predefinida
+. A relação de avô nunca foi explicitamente armazenada na memória; ela é deduzida dinamicamente combinando os fatos existentes através da regra lógica
+.
+Uso de Resolução e Unificação: Quando a consulta grandparent(vern, jake) é executada, o sistema Prolog aciona seu motor de inferência baseado no princípio de resolução
+. O sistema realiza a unificação (um casamento de padrões) para instanciar temporariamente a variável X como vern e Z como jake
+. A partir daí, ele procura na base de dados se existe um Y intermediário que satisfaça as duas condições simultaneamente (father(vern, Y) e mother(Y, jake))
+. Ao encontrar Y=joanne nos fatos, ele prova o objetivo como verdadeiro (yes/true)
+.
+Abordagem Declarativa (Não Procedural): Diferente da programação imperativa ou de consultas puras a bancos de dados, o programador Prolog não escreve o algoritmo (o passo a passo de como buscar, fazer laços ou ponteiros em memória)
+. O programa é declarativo: você apenas define as regras de lógica matemática que caracterizam as relações entre as entidades e deixa que o próprio motor de inferência da linguagem determine o caminho para solucionar e responder às consultas
+.
