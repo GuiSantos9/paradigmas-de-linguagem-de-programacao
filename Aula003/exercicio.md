@@ -6,7 +6,6 @@ Referência: https://doc.rust-lang.org/reference/grammar.html#grammar-summary-Si
 
 ```rust
 for x in y {
-
 }
 ```
 
