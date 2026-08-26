@@ -5,40 +5,56 @@ Referência: https://doc.rust-lang.org/reference/grammar.html#grammar-summary-Si
 ## ***Código base:***
 
 ```rust
-for x in y {}
+for x in y {
+
+}
 ```
 
+## ***Regras gramaticais usadas:***
+Para concentrar a derivação no comando de repetição, usa-se uma gramática reduzida. Os símbolos entre < > são não terminais; os demais representam terminais (palavras-chave e pontuação) da linguagem.
 
-## ***Derivação passo a passo:***
-1. Simbolo inicial: ``Expression``.
-2. O loop for é uma expressão de bloco: ``ExpressionWithBlock``. 
-3. Especificando que é um loop: ``LoopExpression``. 
-4. Especificando que é um loop de iteração(for): ``IteratorLoopExpression``.
-5. Aplicando a produção principa do IteratorLoopExpression: ``for`` ``Pattern`` ``ìn`` ``Expression`` ``BlockExpression``.
-6. Resolvendo o ``Patern`` (padrão da variável do loop):
-    - ``for`` ``PatternNoTopAlt`` ``ìn`` ``Expression`` ``BlockExpression``.
-    - ``for`` ``PatternWithoutRange`` ``ìn`` ``Expression`` ``BlockExpression``.
-    - ``for`` ``IdentifierPattern`` ``ìn`` ``Expression`` ``BlockExpression``.
-    - ``for`` ``IDENTIFIER`` ``ìn`` ``Expression`` ``BlockExpression``
-O Lexer identifica o primeiro identificador como "x":
-    - ``for`` ``x`` ``in`` ``Expression`` ``BlockExpression ``.
+```plainText
+<expression> ::= <loop_expression> | <path_expression>
 
-7. Resolvendo a Expression (o iterador, após o "in"):
-    - ``for`` ``x`` ``in`` ``ExpressionWithoutBlock`` ``BlockExpression``
+<loop_expression> ::= <iterator_loop_expression>
 
-    - ``for`` ``x`` ``in`` ``PathExpression`` ``BlockExpression``
+<iterator_loop_expression> ::= for <pattern> in <expression> 
+<block_expression>
 
-    - ``for`` ``x`` ``in`` ``PathInExpression`` ``BlockExpression``
+<pattern> ::= <identifier_pattern>
 
-    - ``for`` ``x`` ``in`` ``PathIdentSegment`` ``BlockExpression``
+<identifier_pattern> ::= <identifier>
 
-    - ``for`` ``x`` ``in`` ``IDENTIFIER`` ``BlockExpression``
+<path_expression> ::= <identifier>
 
-O Lexer identifica o segundo identificador como "y":
-    - ``for`` x ``in`` ``y`` ``BlockExpression``
+<block_expression> ::= { <statements> } | { }
 
-8. Resolvendo o BlockExpression (o corpo do loop):
-    - ``for`` ``x`` ``in`` ``y`` { Statements? }
+<identifier> ::= x | y
+```
 
-Como nosso bloco está vazio, omitimos os Statements opcionais:
-    - ``for`` ``x`` ``in`` ``y`` ``{`` `` }``
+## **Derivação:**
+A derivação abaixo começa no símbolo não terminal inicial <expression> (já que um loop em Rust é uma expressão) e substitui, passo a passo, cada não terminal até obter a sequência de terminais correspondente ao trecho desejado.
+
+```PlanText
+<expression>
+
+<loop_expression>
+
+<iterator_loop_expression>
+
+for <pattern> in <expression> <block_expression>
+
+for <identifier_pattern> in <expression> <block_expression>
+
+for <identifier> in <expression> <block_expression>
+
+for x in <expression> <block_expression>
+
+for x in <path_expression> <block_expression>
+
+for x in <identifier> <block_expression>
+
+for x in y <block_expression>
+
+for x in y { }
+```
