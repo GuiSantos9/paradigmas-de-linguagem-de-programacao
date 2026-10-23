@@ -1,0 +1,224 @@
+<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>Aula 13 · Thiago Henrique de Campos Silva</title><style>body{font:15px/1.5 "Segoe UI",system-ui,sans-serif;max-width:820px;margin:2rem auto;padding:0 16px;color:#111}h2{border-bottom:2px solid #ddd;padding-bottom:.25rem;margin-top:1.6rem}dt{font-weight:700;margin-top:.6rem}dd{margin:.2rem 0 0;white-space:pre-wrap}dd.vazio{color:#b42318;font-style:italic}img{max-width:100%;border:1px solid #ccc;border-radius:6px}pre{background:#f4f4f4;padding:.6rem;border-radius:6px;white-space:pre-wrap;font:12.5px/1.45 Consolas,monospace}</style><h1>Laboratório Prolog · Aula 13</h1><p>Thiago Henrique de Campos Silva · RA 24019349-2 · Turma ESOFT-6SC<br>Gerado em 19/10/2026, 20:35:08 · tempo registrado no cronômetro: 0:00</p><h2>Preparação: Programar descrevendo, não instruindo</h2><dl><dt>Previsão: O que paradigma(L, funcional) e paradigma(java, logico) vão responder?</dt><dd>Responderão false e false, pois L é lógico e java é imperativo.</dd><dt>Saída do ola.pl</dt><dd><pre>?- linguagem(A).
+   linguagem(prolog)
+   linguagem(scheme)
+   linguagem(java)
+?- paradigma(prolog,A).
+   paradigma(prolog,logico)
+?- paradigma(A,funcional).
+   paradigma(scheme,funcional)
+?- paradigma(java,logico).
+   false.</pre></dd><dt>0.1 Qual é a diferença entre paradigma(prolog, P) e paradigma(prolog, logico)? O que cada uma pergunta?</dt><dd>o paradigma lógico é o conceito geral da ciência da computação, e o prolog é a implementação específica.</dd><dt>0.2 paradigma(java, logico) deu false: Java não é lógico ou o programa não sabe isso? Justifique.</dt><dd>Significa que a linguagem java não é lógica, e sim imperativa.</dd></dl><h2>Etapa 1: Uma base de fatos e perguntas sobre ela</h2><dl><dt>Previsão: Quantas respostas terá mulher(Quem)? E quais pares terá (mae(M, F), mulher(F))?</dt><dd>A consulta terá 7 respostas. Apenas 4 pares atendem o critério (mae(M, F), mulher(F)), M = lucia, F = tereza, M = marta, F = joana, M = tereza, F = bia, M = joana, F = ana.</dd><dt>Saída do familia.pl</dt><dd><pre>--- 1. sem variavel: a resposta e true ou false
+?- mae(joana,jake).
+   mae(joana,jake)
+?- mae(jake,joana).
+   false.
+?- pai(maria,jake).
+   false.
+--- 2. com variavel: o Prolog procura os valores que tornam a consulta verdadeira
+?- mae(joana,A).
+   mae(joana,jake)
+   mae(joana,ana)
+?- pai(A,jake).
+   pai(jorge,jake)
+?- mulher(A).
+   mulher(lucia)
+   mulher(marta)
+   mulher(tereza)
+   mulher(joana)
+   mulher(bia)
+   mulher(ana)
+   mulher(dora)
+--- 3. conjuncao (virgula = E): as duas metas valem com o mesmo valor
+?- mae(joana,A),homem(A).
+   mae(joana,jake),homem(jake)
+?- pai(vern,A),mulher(A).
+   pai(vern,joana),mulher(joana)
+?- mae(A,B),mulher(B).
+   mae(lucia,tereza),mulher(tereza)
+   mae(marta,joana),mulher(joana)
+   mae(tereza,bia),mulher(bia)
+   mae(joana,ana),mulher(ana)
+?- mae(joana,A).
+   mae(joana,jake)
+   mae(joana,ana)</pre></dd><dt>1.1 Escreva em português o que significa a consulta (mae(Mae, Filha), mulher(Filha)) e quantas respostas ela teve.</dt><dd>Encontre uma mãe (Mae) e sua filha (Filha), onde a filha (Filha) seja obrigatoriamente do sexo feminino (mulher).</dd><dt>1.2 pai(maria, jake) deu false mas a base não menciona maria. Que pressuposto explica? Por que pode ser um problema?</dt><dd>Ele acredita que é false, pois não conhece a base, desse modo acontece Pressuposto do Mundo Fechado.</dd><dt>1.3 Em que ordem as respostas de mulher(Quem) apareceram? O que determina essa ordem?</dt><dd>aparece na ordem:
+1. Quem = lucia
+2. Quem = marta
+3. Quem = tereza
+4. Quem = joana
+5. Quem = bia
+6. Quem = ana
+7. Quem = dora</dd></dl><h2>Etapa 2: Regras: ensinando o Prolog a deduzir</h2><dl><dt>Previsão: Quais respostas terão tio(X, jake) e primo(leo, X)?</dt><dd>Os progenitores de jake são joana (mãe) e jorge (pai). O código não lista irmãos para jorge. • O irmão legítimo de joana é paulo (compartilham vern e marta como pais). Como paulo é homem, ele atende ao critério.</dd><dt>Previsão: Quais unificações vão falhar: f(X,X)=f(a,b), f(X,X)=f(a,Y), [A|B]=[], 2+3=5?</dt><dd>Todas vão falhar, apenas f(X, X) = f(a, Y) terá sucesso.</dd><dt>Saídas de regras.pl e unificacao.pl</dt><dd><pre>--- constantes e variaveis
+a  =  a    unifica
+a  =  b    NAO unifica
+A  =  a    unifica   A = a
+--- estruturas
+f(A,b)  =  f(a,B)    unifica   A = a   B = b
+f(A,A)  =  f(a,b)    NAO unifica
+f(A,A)  =  f(a,B)    unifica   A = a   B = a
+pai(A,jake)  =  pai(jorge,B)    unifica   A = jorge   B = jake
+--- listas: [Cabeca|Cauda]
+[A|B]  =  [1,2,3]    unifica   A = 1   B = [2,3]
+[A|B]  =  []    NAO unifica
+[A,B|C]  =  [a,b,c,d]    unifica   A = a   B = b   C = [c,d]
+--- aritmetica NAO e unificacao
+2+3  =  5    NAO unifica</pre></dd><dt>2.1 Por que ancestral precisa de duas cláusulas? Qual é o caso base e qual é o caso recursivo?</dt><dd>Porque ele lida com uma quantidade desconhecida de gerações na árvore genealógica</dd><dt>2.2 Apague X \== Y da regra irmao e consulte irmao(jake, X). O que mudou? Por que a meta é necessária?</dt><dd>Se você apagar X \== Y da regra irmao, o comportamento da consulta irmao(jake, _) muda drasticamente.</dd><dt>2.3 Por que f(X,X)=f(a,b) não unifica mas f(X,X)=f(a,Y) unifica? Quais valores ficam em X e Y?</dt><dd>Porque o Prolog processa a unificação de cima para baixo e da esquerda para a direita</dd><dt>2.4 avo responde em várias direções. Isso é possível numa função de Java ou Scheme? Explique a diferença.</dt><dd>Não, isso não é possível em uma função tradicional de Java.</dd></dl><h2>Etapa 3: Listas: o mesmo padrão do Scheme, em formato de relação</h2><dl><dt>Previsão: O que concatena(X, Y, [1,2,3]) vai responder? Quantas respostas?</dt><dd>Vai encontrar todas as formas possíveis de dividir a lista [1, 2, 3] em duas partes (X e Y).</dd><dt>Saída do listas.pl</dt><dd><pre>--- membro: serve para testar E para gerar
+?- membro(b,[a,b,c]).
+   membro(b,[a,b,c])
+?- membro(z,[a,b,c]).
+   false.
+?- membro(A,[a,b,c]).
+   membro(a,[a,b,c])
+   membro(b,[a,b,c])
+   membro(c,[a,b,c])
+--- tamanho
+?- tamanho([a,b,c],A).
+   tamanho([a,b,c],3)
+?- tamanho([],A).
+   tamanho([],0)
+--- concatena: o mesmo codigo, em varias direcoes
+?- concatena([1,2],[3,4],A).
+   concatena([1,2],[3,4],[1,2,3,4])
+?- concatena(A,[3],[1,2,3]).
+   concatena([1,2],[3],[1,2,3])
+?- concatena([1],A,[1,2,3]).
+   concatena([1],[2,3],[1,2,3])
+?- concatena(A,B,[1,2,3]).
+   concatena([],[1,2,3],[1,2,3])
+   concatena([1],[2,3],[1,2,3])
+   concatena([1,2],[3],[1,2,3])
+   concatena([1,2,3],[],[1,2,3])
+--- inverte
+?- inverte([1,2,3],A).
+   inverte([1,2,3],[3,2,1])</pre></dd><dt>3.1 Em tamanho, qual é o caso base e qual é o passo recursivo? O que fica pendente a cada chamada?</dt><dd>No predicado tamanho/2, a contagem é feita "na volta" da recursão utilizando a pilha de execução.</dd><dt>3.2 Por que concatena(X,Y,[1,2,3]) tem 4 respostas? Compare com anexar do Scheme: o que ele não consegue fazer?</dt><dd>Possui 4 respostas porque existem exatamente 4 maneiras matemáticas de dividir uma sequência de 3 elementos em duas sublistas ordenadas.</dd><dt>3.3 membro(X,[a,b,c]) gerou a, b e c sem laço. Que mecanismo do Prolog fez isso?</dt><dd>O mecanismo do Prolog que permitiu "gerar" as respostas a, b e c sem a necessidade de uma estrutura de laço.</dd></dl><h2>Etapa 4: Aritmética: onde o Prolog deixa de ser relacional</h2><dl><dt>Previsão: O que mostram X = 2 + 3 e X is 2 + 3? E fatorial(N, 120)?</dt><dd>X = 2 + 3 mostra X = 2 + 3 e fatorial(N, 120) vai gerar um ERRO de instanciação (provavelmente um instantiation_error). Ela não vai responder N = 5.</dd><dt>Saída do aritmetica.pl</dt><dd><pre>--- = unifica, is calcula
+?- A=2+3.
+   2+3=2+3
+?- A is 2+3.
+   5 is 2+3
+?- 5=:=2+3.
+   5=:=2+3
+?- 2+3=5.
+   false.
+?- A is 7 mod 3.
+   1 is 7 mod 3
+?- A is 7//2.
+   3 is 7//2
+?- A is 2^10.
+   1024 is 2^10
+--- fatorial, fib e soma
+?- fatorial(5,A).
+   fatorial(5,120)
+?- fatorial(0,A).
+   fatorial(0,1)
+?- fib(10,A).
+   fib(10,55)
+?- soma([1,2,3,4],A).
+   soma([1,2,3,4],10)
+--- aritmetica nao e relacional
+?- fatorial(A,120).
+   ERRO: instantiation_error
+?- A is B+1.
+   ERRO: instantiation_error</pre></dd><dt>4.1 Explique com exemplos a diferença entre =, is e =:=.</dt><dd>O =  não faz contas. Ele serve apenas para comparar ou casar formatos e estruturas. O is  obriga o Prolog a calcular matematicamente tudo o que está do lado direito. =:= serve estritamente para comparar se dois resultados matemáticos são iguais.</dd><dt>4.2 Por que fatorial(N,120) dá erro e concatena(X,[3],[1,2,3]) funcionou? O que há de diferente na aritmética?</dt><dd>A diferença crucial entre essas duas consultas está no fato de que o predicado concatena/3 foi construído usando Lógica Pura (Relacional), enquanto o predicado fatorial/2 depende de Aritmética de Máquina.</dd><dt>4.3 Compare o fatorial em Prolog com o fact em Haskell: o que é igual e o que é diferente?</dt><dd>Ao comparar o cálculo do fatorial em Prolog com o fact em Haskell, estamos olhando para o reflexo de dois paradigmas declarativos.</dd></dl><h2>Etapa 5: Controlando (e sofrendo com) a busca</h2><dl><dt>Previsão: qual de solteiro1/solteiro2 dá false? maximo2(5,3,M) uma ou duas respostas? maximo3(5,3,3) true ou false?</dt><dd>A consulta que dará false é solteiro2(_) (ou solteiro2(X)).</dd><dt>Saída de controle.pl e mensagem de ancestral_ruim</dt><dd><pre>--- A) backtracking: acompanhe a ordem das tentativas
+?- mesmo_gosto(X, Y).
+   tenta ana e ana
+   tenta ana e bia
+   tenta ana e caio
+   resposta: mesmo_gosto(ana,caio)
+   tenta bia e ana
+   tenta bia e bia
+   tenta bia e caio
+   tenta caio e ana
+   resposta: mesmo_gosto(caio,ana)
+   tenta caio e bia
+   tenta caio e caio
+--- B) negacao: a ordem das metas muda a resposta
+?- solteiro1(A).
+   solteiro1(osvaldo)
+   solteiro1(paulo)
+   solteiro1(jake)
+?- solteiro2(A).
+   false.
+--- C) corte
+?- maximo1(5,3,A).
+   maximo1(5,3,5)
+?- maximo2(5,3,A).
+   maximo2(5,3,5)
+   maximo2(5,3,3)
+?- maximo3(5,3,A).
+   maximo3(5,3,5)
+?- maximo1(5,3,3).
+   false.
+?- maximo3(5,3,3).
+   maximo3(5,3,3)
+
+ancestral_bom(osvaldo, jake)?
+  sim
+ancestral_ruim(osvaldo, jake)? (vai estourar a pilha)
+
+Fatal Error: local stack overflow (size: 16384 Kb, reached: 16383 Kb, environment variable used: LOCALSZ)</pre></dd><dt>Previsão: Quantas colorações existem com 3 cores? E com 2 cores?</dt><dd>Com 2 cores: 0 colorações (Dá false). Com 3 cores: 24 colorações.</dd><dt>Saída do mapa.pl</dt><dd><pre>--- coloracoes com 3 cores, na ordem [RS, SC, PR, SP, MS, MG, RJ, ES]
+[vermelho,verde,vermelho,verde,azul,vermelho,azul,verde]
+[vermelho,verde,vermelho,azul,verde,vermelho,verde,azul]
+--- quantas coloracoes existem com 3 cores?
+24
+--- e com 2 cores?
+?- mapa([vermelho,verde],A).
+   false.
+--- e com 4 cores?
+1728</pre></dd><dt>5.1 Com o rastro do bloco A, explique como o Prolog encontrou as respostas de mesmo_gosto(X,Y). Que meta falhou e para onde voltou?</dt><dd>A meta que falhou em "tenta ana e ana" foi X \== Y.
+O caminho do Prolog até a falha:
+1. O Prolog entra na regra e executa amigo(X). Ele pega o primeiro fato da base: amigo(ana). Portanto, X = ana.</dd><dt>5.2 Por que solteiro2 dá false e solteiro1 não? Por que solteiro1 afirma que osvaldo é solteiro?</dt><dd>A diferença de comportamento entre as duas regras resume de forma perfeita como o Prolog avalia o seu código de forma estritamente procedural.</dd><dt>5.3 maximo3(5,3,3) deu true. Explique por que o corte não protegeu esse uso. Como você corrigiria?</dt><dd>A consulta maximo3(5, 3, 3) retornar true é um erro clássico de lógica no Prolog causado pelo uso incorreto do corte vermelho</dd><dt>5.4 Por que ancestral_ruim estoura a pilha e ancestral_bom não, se dizem a mesma coisa logicamente?</dt><dd>O Prolog não é apenas um provador lógico abstrato; ele é um motor de execução procedural que lê o código rigidamente de cima para baixo e da esquerda para a direita.</dd><dt>5.5 Quantas colorações com 3, 2 e 4 cores? Por que o programa é declarativo apesar de fazer busca?</dt><dd>• Com 3 cores: O programa encontrou 24 colorações.
+• Com 2 cores: O programa encontrou 0 colorações (a resposta da consulta é false).
+• Com 4 cores: O programa encontrou 1728 colorações.</dd></dl><h2>Fechamento: O que você viu e onde isso se encaixa</h2><dl><dt>6.1 Explique a diferença entre o paradigma lógico e o funcional usando concatena e anexar.</dt><dd>O paradigma funcional baseia-se em funções unidirecionais onde entradas rígidas produzem uma única saída, como o append do Scheme [INDEX]. Já o paradigma lógico baseia-se em relações bidirecionais (predicados), permitindo que o concatena do Prolog seja executado em múltiplas direções para validar, computar ou gerar todas as combinações possíveis de listas por unificação e backtracking [INDEX, INDEX].</dd><dt>6.2 Cite duas deficiências do Prolog que você observou, ligando cada uma a um programa.</dt><dd>1. A união entre o "Falso" e o "Desconhecido" (Negação por Falha): O Prolog assume que tudo o que ele não consegue provar é falso. Isso ficou evidente quando a consulta pai(maria, jake) retornou false. O Prolog não sabe discernir se Maria realmente não é pai de Jake ou se a base de dados apenas está incompleta, o que gera sérios problemas de confiabilidade em sistemas do mundo real com dados parciais.
+2. Efeitos colaterais e bugs lógicos causados pelo Controle de Busca (Corte): O uso de operadores procedurais como o corte (!) quebra a pureza lógica da linguagem. Isso ficou claro no programa do maximo3(5, 3, 3), que retornou erroneamente true (afirmando que 3 é o maior número) porque uma unificação precoce na cabeça da regra impediu que o corte fosse ativado, deixando a alternativa incorreta exposta.</dd><dt>6.3 Para que tipo de problema você escolheria Prolog em vez de Java? E para qual não escolheria?</dt><dd>Eu escolheria o Prolog para problemas que envolvem alta complexidade lógica, regras de negócio intrincadas ou necessidade de busca combinatória</dd></dl><h2>Exercícios opcionais</h2><dl><dt>Opcionais: resultado dos testes</dt><dd><pre>Exercicio 1
+   FALHOU  irma(ana, jake)
+   FALHOU  irma(tereza, vern)
+   FALHOU  NAO irma(jake, ana)
+   FALHOU  tia(tereza, joana)
+   FALHOU  tia(joana, leo)
+   FALHOU  NAO tia(joana, jake)
+Exercicio 2
+   FALHOU  ultimo([a,b,c], c)
+   FALHOU  ultimo([7], 7)
+   FALHOU  NAO ultimo([a,b,c], b)
+Exercicio 3
+   FALHOU  soma_quadrados([1,2,3], 14)
+   FALHOU  soma_quadrados([], 0)
+   FALHOU  pares([1,2,3,4,5,6], [2,4,6])
+   FALHOU  pares([1,3], [])
+Exercicio 4
+   FALHOU  mdc(12, 18, 6)
+   FALHOU  mdc(17, 5, 1)
+   FALHOU  mdc(10, 0, 10)
+   FALHOU  potencia(2, 10, 1024)
+   FALHOU  potencia(5, 0, 1)
+Exercicio 5
+   FALHOU  caminho(curitiba, foz)
+   FALHOU  caminho(joinville, cascavel)
+   FALHOU  NAO caminho(foz, curitiba)
+   FALHOU  NAO caminho(curitiba, paris)
+Exercicio 6
+   FALHOU  3 cores: 12 coloracoes
+   FALHOU  2 cores: 2 coloracoes
+   FALHOU  1 cor: nenhuma
+Exercicio 7
+   FALHOU  colega(ana, bruno)
+   FALHOU  NAO colega(ana, carla)
+   FALHOU  NAO colega(ana, ana)
+   FALHOU  ganha_mais(ana, bruno)
+   FALHOU  NAO ganha_mais(elisa, ana)
+   FALHOU  total_depto(ti, 12500)
+   FALHOU  total_depto(rh, 9000)
+Ready</pre></dd><dt>E1 Regras de família: código escrito</dt><dd><pre>irma(X, Y) :- irmao(X, Y), mulher(X).
+tia(X, Y) :- progenitor(P, Y), irma(X, P).</pre></dd><dt>E2 Listas: código escrito</dt><dd><pre>ultimo([X], X).
+ultimo([_|Cauda], X) :- ultimo(Cauda, X).</pre></dd><dt>E3 As funções da Aula 12: código escrito</dt><dd><pre>soma_quadrados([], 0).
+soma_quadrados([H|T], S) :- soma_quadrados(T, S1), S is S1 + (H * H).</pre></dd><dt>E4 Aritmética: código escrito</dt><dd><pre>mdc(A, 0, A) :- !.
+mdc(A, B, D) :- B &gt; 0, Resto is A mod B, mdc(B, Resto, D).</pre></dd><dt>E5 Grafo com ciclos: código escrito</dt><dd><pre>caminho(A, B) :- caminho_aux(A, B, [A]).
+
+caminho_aux(A, B, _) :- liga(A, B).
+caminho_aux(A, B, Visitados) :- 
+    liga(A, C), 
+    \+ membro(C, Visitados), 
+    caminho_aux(C, B, [C|Visitados]).</pre></dd><dt>E6 Mapa menor: código escrito</dt><dd><pre>mapa_sul(Paleta, [RS, SC, PR]) :-
+    membro(RS, Paleta), membro(SC, Paleta), membro(PR, Paleta),
+    RS \== SC, SC \== PR.</pre></dd><dt>E7 Prolog como banco de dados: código escrito</dt><dd><pre>colega(X, Y) :- funcionario(X, Depto, _), funcionario(Y, Depto, _), X \== Y.
+ganha_mais(X, Y) :- funcionario(X, _, SalX), funcionario(Y, _, SalY), SalX &gt; SalY.
+total_depto(D, Total) :- findall(Sal, funcionario(_, D, Sal), ListaSal), soma(ListaSal, Total).</pre></dd></dl></html>
