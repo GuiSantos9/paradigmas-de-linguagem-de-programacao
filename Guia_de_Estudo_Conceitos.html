@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guia de estudo · Paradigmas</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23142230'/%3E%3Cpath d='M18 44V20h14a8 8 0 010 16H18' fill='none' stroke='%23ff7c50' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@400;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap">
+<style>
+:root{
+  --paper:#e6ecf0; --surface:#ffffff; --surface-2:#eef3f6; --ink:#142230; --muted:#566676; --line:#d6dee5;
+  --a:#d9532a; --a-soft:#fce8df; --b:#11817f; --b-soft:#d9f1ef; --ok:#2a8550; --ok-soft:#e0f3e7;
+  --bad:#c0392b; --warn:#a66a00; --warn-soft:#fff1d6;
+  --code-bg:#0f1b26; --code-ink:#dce6ee; --code-dim:#7f93a6; --code-kw:#7fd8d4; --code-str:#ffb48f; --code-num:#f3d77a;
+  --f-disp:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",Consolas,"Cascadia Mono",monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0a1117; --surface:#141f29; --surface-2:#1a2733; --ink:#e3eaf0; --muted:#98a8b6; --line:#283746;
+  --a:#ff7c50; --a-soft:#3a2219; --b:#3fc3c0; --b-soft:#11302f; --ok:#5ec489; --ok-soft:#14301f;
+  --bad:#ff7b6b; --warn:#f0b14a; --warn-soft:#33270f;
+  --code-bg:#0a121a; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --paper:#0a1117; --surface:#141f29; --surface-2:#1a2733; --ink:#e3eaf0; --muted:#98a8b6; --line:#283746;
+  --a:#ff7c50; --a-soft:#3a2219; --b:#3fc3c0; --b-soft:#11302f; --ok:#5ec489; --ok-soft:#14301f;
+  --bad:#ff7b6b; --warn:#f0b14a; --warn-soft:#33270f;
+  --code-bg:#0a121a; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);overflow:hidden}
+
+/* ---------- palco (1280 x 720, escalado) ---------- */
+#frame{position:fixed;left:0;right:0;top:0;bottom:44px;display:flex;align-items:center;justify-content:center}
+#wrap{position:relative;flex:none}
+#stage{position:absolute;left:0;top:0;width:1280px;height:720px;transform-origin:0 0;
+  background:var(--surface);box-shadow:0 2px 6px rgba(20,34,48,.12),0 18px 48px rgba(20,34,48,.18);overflow:hidden}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;visibility:hidden;
+  transition:opacity .25s ease;font-size:22px;line-height:1.4}
+.slide.on{opacity:1;visibility:visible}
+@media (prefers-reduced-motion:reduce){.slide{transition:none}}
+.notes{display:none}
+
+/* ---------- cabeçalho das questões ---------- */
+.qh{display:flex;align-items:center;gap:20px;padding:0 40px;height:84px;flex:none;
+  background:var(--ink);color:#fff}
+:root[data-theme="dark"] .qh{background:#0d151c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .qh{background:#0d151c}}
+.qn{font:800 44px/1 var(--f-disp);background:var(--a);color:#fff;border-radius:14px;min-width:76px;height:56px;
+  display:grid;place-items:center;letter-spacing:-.02em}
+.qh .tt{flex:1;min-width:0}
+.qt{font:800 27px/1.1 var(--f-disp);letter-spacing:-.01em}
+.qs{font-size:17px;opacity:.82;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chips{display:flex;gap:8px;flex:none}
+.chips span{font:600 15px/1 var(--f-body);padding:8px 12px;border-radius:99px;background:rgba(255,255,255,.14);white-space:nowrap}
+.chips .obj{background:var(--b);color:#fff}
+.chips .abe{background:var(--a);color:#fff}
+
+/* ---------- corpo das questões ---------- */
+.qbody{flex:1;min-height:0;display:grid;grid-template-columns:.92fr 1.12fr;gap:26px;padding:18px 40px 8px;
+  font-size:calc(21px * var(--k,1))}
+.qbody.one{grid-template-columns:1fr}
+.qbody.even{grid-template-columns:1fr 1fr}
+.qbody.one .cmdbox{font-size:1.22em;padding:1em 1.3em}
+.col{min-height:0;min-width:0;overflow:hidden;display:flex;flex-direction:column;gap:.55em}
+.label{align-self:flex-start;font:700 .62em/1 var(--f-body);letter-spacing:.16em;padding:.5em .85em;border-radius:99px;
+  background:var(--a-soft);color:var(--a)}
+.label.cmd{background:var(--b-soft);color:var(--b)}
+.col p{margin:0}
+.cmdbox{background:var(--surface-2);border-left:6px solid var(--b);border-radius:0 14px 14px 0;padding:.7em .95em}
+.v{font-weight:800;color:var(--b);letter-spacing:.01em}
+code{font-family:var(--f-mono);font-size:.86em;background:var(--surface-2);padding:.04em .26em;border-radius:5px;font-variant-ligatures:none}
+pre.code{margin:0;background:var(--code-bg);color:var(--code-ink);border-radius:12px;padding:.7em .9em;
+  font-family:var(--f-mono);font-size:.76em;line-height:1.45;overflow:hidden;white-space:pre;font-variant-ligatures:none}
+pre.code code{background:none;padding:0;font-size:1em;color:inherit}
+pre.code i{font-style:normal}
+pre.code .c{color:var(--code-dim)} pre.code .s{color:var(--code-str)} pre.code .n{color:var(--code-num)} pre.code .k{color:var(--code-kw);font-weight:600}
+pre.code.hl{outline:3px solid var(--a)}
+.codes{display:grid;gap:.5em}
+.codes.two{grid-template-columns:1fr 1fr}
+
+.alts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.45em}
+.alts li{display:flex;gap:.7em;align-items:flex-start;padding:.5em .7em;border:2px solid var(--line);border-radius:12px;background:var(--surface)}
+.alts b{flex:none;width:1.7em;height:1.7em;display:grid;place-items:center;border-radius:50%;background:var(--ink);color:var(--surface);font:800 .85em/1 var(--f-disp)}
+.alts span{font-size:.9em;line-height:1.32}
+.sub{list-style:none;margin:.2em 0 0;padding:0;display:flex;flex-direction:column;gap:.55em}
+.sub li{display:flex;gap:.6em;align-items:flex-start}
+.sub .k{flex:none;font:800 1em/1.35 var(--f-disp);color:var(--a);min-width:1.2em}
+.ref{flex:none;padding:6px 40px 12px;font-size:15px;color:var(--muted);display:flex;gap:10px;align-items:center}
+.ref:before{content:"";width:28px;height:3px;background:var(--a);border-radius:2px}
+
+/* tabela */
+table.t{border-collapse:collapse;width:100%;font-size:.8em}
+table.t th,table.t td{border:1px solid var(--line);padding:.32em .55em;text-align:left;vertical-align:top}
+table.t th{background:var(--ink);color:#fff;font-weight:700}
+:root[data-theme="dark"] table.t th{background:#0d151c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) table.t th{background:#0d151c}}
+table.t td:first-child{font-weight:700;background:var(--surface-2)}
+
+/* ---------- slides de abertura ---------- */
+.cover{background:linear-gradient(135deg,#0f1b26 0%,#142230 55%,#1d3a44 100%);color:#fff;padding:70px 80px;justify-content:center;gap:0}
+.cover:before{content:"";position:absolute;right:-120px;top:-120px;width:520px;height:520px;border-radius:50%;
+  background:radial-gradient(circle,rgba(217,83,42,.55),rgba(217,83,42,0) 68%)}
+.cover:after{content:"";position:absolute;left:0;bottom:0;width:100%;height:10px;background:linear-gradient(90deg,var(--a),#11817f)}
+.cover .kicker{font:700 20px/1 var(--f-body);letter-spacing:.22em;color:#ffb48f;text-transform:uppercase}
+.cover h1{font:800 76px/1.02 var(--f-disp);letter-spacing:-.03em;margin:22px 0 18px;max-width:980px;position:relative}
+.cover .sub2{font-size:27px;opacity:.9;max-width:900px;position:relative}
+.cover .meta{display:flex;gap:14px;margin-top:40px;position:relative}
+.cover .meta span{font:700 22px/1 var(--f-body);padding:13px 20px;border-radius:99px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25)}
+.cover .hint{position:absolute;left:80px;bottom:34px;font-size:16px;opacity:.65}
+
+.page{padding:34px 54px 20px;flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:18px;font-size:calc(22px * var(--k,1))}
+.page h2{font:800 42px/1.05 var(--f-disp);margin:0;letter-spacing:-.02em}
+.page h2 small{display:block;font:600 18px/1 var(--f-body);letter-spacing:.16em;color:var(--a);text-transform:uppercase;margin-bottom:10px}
+.rules{margin:0;padding:0;list-style:none;display:grid;gap:12px;counter-reset:r}
+.rules li{counter-increment:r;display:flex;gap:16px;align-items:flex-start;padding:14px 18px;background:var(--surface-2);border-radius:14px}
+.rules li:before{content:counter(r);flex:none;width:38px;height:38px;border-radius:50%;background:var(--a);color:#fff;
+  display:grid;place-items:center;font:800 20px/1 var(--f-disp)}
+.flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:12px;align-items:stretch}
+.flow .box{padding:16px 18px;border-radius:14px;background:var(--surface-2);border-top:6px solid var(--a)}
+.flow .box.b{border-top-color:var(--b)} .flow .box.g{border-top-color:var(--ok)}
+.flow .box h3{margin:0 0 6px;font:800 22px/1.1 var(--f-disp)}
+.flow .arrow{align-self:center;font-size:34px;color:var(--muted)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:26px;flex:none;font-size:1.1em}
+.verbs td:first-child{font-family:var(--f-disp);font-weight:800;color:var(--b);width:44%;background:none}
+.timeline{display:flex;gap:6px;height:128px;margin-top:6px}
+.seg{border-radius:14px;padding:14px 16px;color:#fff;display:flex;flex-direction:column;justify-content:space-between;min-width:0}
+.seg b{font:800 38px/1 var(--f-disp)} .seg span{font-size:18px;line-height:1.2}
+.seg.s3{min-width:190px}.seg.s4{min-width:140px}.seg.s1{background:var(--b)} .seg.s2{background:var(--a)} .seg.s3{background:#7a4cc2} .seg.s4{background:#5d6d7c}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.card{background:var(--surface-2);border-radius:14px;padding:14px 18px;border-left:6px solid var(--b)}
+.card h3{margin:0;font:800 24px/1.1 var(--f-disp)}
+.card .cap{font-size:16px;color:var(--muted);margin:3px 0 8px}
+.card .qs2{display:flex;gap:6px;flex-wrap:wrap}
+.card .qs2 span{font:800 16px/1 var(--f-body);background:var(--a);color:#fff;border-radius:99px;padding:6px 10px}
+.card.wide{grid-column:1/-1;border-left-color:#7a4cc2}
+.checks{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.checks li{padding:14px 18px 14px 54px;position:relative;background:var(--surface-2);border-radius:14px}
+.checks li:before{content:"";position:absolute;left:18px;top:50%;width:22px;height:22px;margin-top:-11px;border:3px solid var(--b);border-radius:6px}
+
+
+/* ---------- revisão ---------- */
+.pts{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:.5em}
+.pts li{padding-left:1.2em;position:relative;line-height:1.35}
+.pts li:before{content:"";position:absolute;left:0;top:.55em;width:.5em;height:.5em;border-radius:2px;background:var(--a)}
+.callout{background:var(--a-soft);border-left:6px solid var(--a);border-radius:0 14px 14px 0;padding:.6em .9em;line-height:1.35}
+.callout.b{background:var(--b-soft);border-left-color:var(--b)}
+.callout.w{background:var(--warn-soft);border-left-color:var(--warn)}
+.callout b.h{display:block;font:800 .8em/1 var(--f-body);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.35em;color:var(--a)}
+.callout.b b.h{color:var(--b)} .callout.w b.h{color:var(--warn)}
+.label.g{background:var(--b-soft);color:var(--b)} .label.p{background:#ece4f8;color:#6a3fb5}
+.qz{list-style:none;counter-reset:z;padding:0;margin:0;display:flex;flex-direction:column;gap:.7em}
+.qz li{counter-increment:z;background:var(--surface-2);border-radius:14px;padding:.6em .9em .6em 3em;position:relative;line-height:1.35}
+.qz li:before{content:counter(z);position:absolute;left:.8em;top:.65em;width:1.6em;height:1.6em;border-radius:50%;background:var(--a);color:#fff;display:grid;place-items:center;font:800 .85em/1 var(--f-disp)}
+.qz pre.code{margin-top:.4em}
+.ans{display:block;margin-top:.4em;color:var(--ok);font-weight:700;visibility:hidden}
+.slide.rev .ans{visibility:visible}
+.hintkey{color:var(--muted);font-size:.8em}
+.cover.sec h1{font-size:64px}
+.cover.sec .meta span{font-size:20px}
+.diagram{width:100%;height:auto;display:block}
+.diagram text{font-family:var(--f-body);fill:var(--ink)}
+
+/* ---------- barra inferior ---------- */
+#bar{position:fixed;left:0;right:0;bottom:0;height:44px;display:flex;align-items:center;gap:8px;padding:0 12px;
+  background:var(--surface);border-top:1px solid var(--line);font:600 14px/1 var(--f-body);transition:opacity .4s}
+body.idle #bar{opacity:0}
+#bar button{font:inherit;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;
+  height:30px;min-width:32px;padding:0 10px;cursor:pointer}
+#bar button:hover{border-color:var(--b)} #bar button[aria-pressed="true"]{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+#bar .sp{flex:1}
+#count{min-width:64px;text-align:center;color:var(--muted)}
+#prog{position:fixed;left:0;bottom:44px;height:3px;background:var(--a);width:0;transition:width .25s;z-index:5}
+#clock{font-variant-numeric:tabular-nums;min-width:92px}
+#clock.run{border-color:var(--b)} #clock.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+#clock.bad{background:var(--a-soft);color:var(--bad);border-color:var(--bad)}
+
+/* ---------- anotações ---------- */
+#notes{position:fixed;left:0;right:0;bottom:44px;height:40vh;background:var(--warn-soft);border-top:4px solid var(--warn);
+  display:none;overflow:auto;padding:12px 28px 18px;font-size:17px;line-height:1.45;z-index:6}
+#notes.on{display:block}
+#notes .nh{font:700 13px/1 var(--f-body);letter-spacing:.14em;color:var(--warn);text-transform:uppercase;margin-bottom:8px}
+#notes h4{margin:12px 0 4px;font:800 16px/1.2 var(--f-disp);color:var(--ink)}
+#notes p{margin:4px 0} #notes ul{margin:4px 0;padding-left:22px} #notes li{margin:2px 0}
+#notes .gab{display:inline-block;background:var(--ok);color:#fff;border-radius:8px;padding:2px 10px;font-weight:700}
+#notes code{background:rgba(0,0,0,.08)}
+#notes table{border-collapse:collapse;font-size:15px;margin:6px 0}
+#notes td,#notes th{border:1px solid var(--line);padding:3px 8px;text-align:left}
+
+/* ---------- ajuda ---------- */
+#help{position:fixed;inset:0;background:rgba(10,17,23,.72);display:none;place-items:center;z-index:10}
+#help.on{display:grid}
+#help div{background:var(--surface);border-radius:16px;padding:22px 30px;max-width:520px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+#help h3{margin:0 0 10px;font:800 24px/1 var(--f-disp)}
+#help dl{display:grid;grid-template-columns:auto 1fr;gap:6px 18px;margin:0;font-size:16px}
+#help dt{font:700 14px var(--f-mono);background:var(--surface-2);border-radius:6px;padding:3px 8px;justify-self:start}
+#help dd{margin:0;align-self:center}
+#toast{position:fixed;left:50%;bottom:64px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;
+  font-size:15px;opacity:0;pointer-events:none;transition:opacity .3s;z-index:12}
+#toast.on{opacity:1}
+#bnotes,#bpres,#clock{display:none!important}
+.qbody{font-size:calc(24px * var(--k,1))}
+</style>
+</head>
+<body>
+<div id="frame"><div id="wrap"><div id="stage">
+
+<section class="slide cover on" id="capa" data-title="Capa">
+  <div class="kicker">Unicesumar · Engenharia de Software</div>
+  <h1>Guia de estudo: conceitos-chave</h1>
+  <div class="sub2">Paradigmas de Linguagens de Programação · aulas 06 a 12 · uma revisão rápida dos conceitos que você precisa dominar</div>
+  <div class="meta"><span>10 tópicos</span><span>Sebesta, 11. ed.</span><span>Para estudar</span></div>
+  <div class="hint">Use → e ← para navegar · F para tela cheia</div>
+</section>
+
+<section class="slide" id="t-reais" data-title="Números reais e decimais no computador">
+  <header class="qh">
+    <div class="qn">06</div>
+    <div class="tt"><div class="qt">Números reais e decimais no computador</div><div class="qs">Representação, precisão e quando evitar o ponto flutuante</div></div>
+    <div class="chips"><span class="obj">§6.2.1.2 e §6.2.1.4 · p. 237-239</span></div>
+  </header>
+  <div class="qbody" data-fit><div class="col" data-fit><span class="label">IDEIAS-CHAVE</span><ul class="pts"><li>Reais são guardados em <b>ponto flutuante</b> (padrão IEEE 754): um número <b>finito de bits</b>, em binário.</li><li>Muitos decimais (como 0,1) são <b>dízimas em binário</b> e <b>não têm representação exata</b>.</li><li>Resultado: <b>pequenos erros</b> que se acumulam, e comparar reais com <code>==</code> é arriscado (usa-se tolerância).</li><li>Para valores exatos existem os <b>tipos decimais</b> (COBOL, C#; <code>BigDecimal</code>, <code>Decimal</code>) e a técnica de guardar <b>inteiros</b> (centavos).</li></ul></div><div class="col" data-fit><span class="label g">PARA PENSAR</span><pre class="code"><code>0.1 + 0.2        // 0.30000000000000004
+float   ~  7 digitos
+double  ~ 15-16 digitos</code></pre><div class="callout b"><b class="h">Pergunte-se</b><ul class="pts"><li>Por que 0,1 não é exato em binário?</li><li>Que custo traz um tipo decimal?</li><li>Em que situações do dia a dia a exatidão é indispensável?</li></ul></div></div></div>
+  <div class="ref">SEBESTA, 11. ed., §6.2.1.2 e §6.2.1.4, p. 237-239.</div>
+</section>
+
+<section class="slide" id="t-ponteiros" data-title="Ponteiros e memória dinâmica">
+  <header class="qh">
+    <div class="qn">06</div>
+    <div class="tt"><div class="qt">Ponteiros e memória dinâmica</div><div class="qs">Erros clássicos e como as linguagens os evitam</div></div>
+    <div class="chips"><span class="obj">§6.11 · p. 273-285</span></div>
+  </header>
+  <div class="qbody" data-fit><div class="col" data-fit><span class="label">IDEIAS-CHAVE</span><ul class="pts"><li>Ponteiro (ou referência) guarda um <b>endereço</b>. Serve para acesso indireto e para a <b>gerência do monte</b> (<i>heap</i>).</li><li><b>Ponteiro solto</b> (<i>dangling</i>): aponta para memória que <b>já foi liberada</b>.</li><li><b>Variável do monte perdida</b>: foi alocada, mas <b>nenhum ponteiro</b> aponta mais para ela (vazamento).</li><li>Esses erros afetam a <b>confiabilidade</b> e a <b>segurança</b> (por exemplo, vazamento de dados).</li></ul></div><div class="col" data-fit><span class="label g">QUEM AJUDA</span><table class="t"><tr><th>Estratégia</th><th>Como funciona</th></tr><tr><td>Liberação manual (C)</td><td>o programador chama <code>free</code>; pode errar</td></tr><tr><td>Coleta de lixo (Java, Go)</td><td>o sistema libera o que ficou inalcançável</td></tr><tr><td>Posse e empréstimo (Rust)</td><td>o compilador verifica o uso; sem coletor</td></tr></table><div class="callout b"><b class="h">Pergunte-se</b><ul class="pts"><li>Em que momento um ponteiro passa a ser “solto”?</li><li>O que a coleta de lixo resolve? O que ela não resolve?</li></ul></div></div></div>
+  <div class="ref">SEBESTA, 11. ed., §6.11.3-6.11.7, p. 275-285.</div>
+</section>
+
+<section class="slide" id="t-curto" data-title="Expressões booleanas e curto-circuito">
+  <header class="qh">
+    <div class="qn">07</div>
+    <div class="tt"><div class="qt">Expressões booleanas e curto-circuito</div><div class="qs">A ordem e a necessidade de avaliar cada operando</div></div>
+    <div class="chips"><span class="obj">§7.5-7.6 · p. 313-317</span></div>
+  </header>
+  <div class="qbody" data-fit><div class="col" data-fit><span class="label">IDEIAS-CHAVE</span><ul class="pts"><li>Operadores com <b>curto-circuito</b> (<code>&amp;&amp;</code>, <code>||</code>) <b>param</b> quando o resultado já é conhecido.</li><li>Os operadores <b>sem</b> curto-circuito (<code>&amp;</code>, <code>|</code> sobre booleanos) <b>avaliam sempre</b> os dois lados.</li><li>O curto-circuito permite testes <b>defensivos</b>: verificar antes de usar.</li><li>Atenção aos <b>efeitos colaterais</b> do 2º operando: podem <b>não acontecer</b>.</li></ul></div><div class="col" data-fit><span class="label g">PARA PENSAR</span><pre class="code"><code>s != null &amp;&amp; s.length() &gt; 0   // o 2o lado depende do 1o
+a() || b()                    // quando b() executa?</code></pre><div class="callout b"><b class="h">Pergunte-se</b><ul class="pts"><li>Em que ordem os operandos são avaliados?</li><li>O que acontece com o 2º operando quando o 1º já decide?</li><li>Que erros de execução o curto-circuito ajuda a evitar?</li></ul></div></div></div>
+  <div class="ref">SEBESTA, 11. ed., §7.5 e §7.6, p. 313-317.</div>
+</section>
+
+<section class="slide" id="t-selecao" data-title="Seleção múltipla">
+  <header class="qh">
+    <div class="qn">07</div>
+    <div class="tt"><div class="qt">Seleção múltipla</div><div class="qs">Como cada linguagem decide o que executa depois de um caso</div></div>
+    <div class="chips"><span class="obj">§8.2 · p. 330-341</span></div>
+  </header>
+  <div class="qbody" data-fit><div class="col" data-fit><span class="label">IDEIAS-CHAVE</span><ul class="pts"><li>No <code>switch</code> de C e das linguagens derivadas, cada <code>case</code> é um <b>rótulo</b>.</li><li>Sem <code>break</code>, a execução <b>continua</b> nos casos seguintes: <i>fall-through</i>.</li><li>Consequência: código que <b>parece correto</b> e faz mais do que o esperado, difícil de enxergar na revisão.</li><li>Outros projetos: <code>-&gt;</code> do Java 14, Go (o caso termina sozinho), C# (proíbe cair), <code>match</code> do Rust (exaustivo).</li></ul></div><div class="col" data-fit><span class="label g">PARA PENSAR</span><pre class="code"><code>switch (nivel) {
+  case 1:  passo_a();
+  case 2:  passo_b();
+          break;
+  default: passo_c();
+}</code></pre><div class="callout b"><b class="h">Pergunte-se</b><ul class="pts"><li>O que roda quando <code>nivel</code> vale 1? E quando vale 2?</li><li>Que efeito essa característica tem sobre legibilidade e confiabilidade?</li><li>Como outra linguagem evita o problema?</li></ul></div></div></div>
+  <div class="ref">SEBESTA, 11. ed., §8.2.2, p. 334-341.</div>
+</section>
+
+<section class="slide" id="t-passagem" data-title="Passagem de parâmetros">
+  <header class="qh">
+    <div class="qn">08</div>
+    <div class="tt"><div class="qt">Passagem de parâmetros</div><div class="qs">O que é copiado quando um subprograma é chamado</div></div>
+    <div class="chips"><span class="obj">§9.5 · p. 376-384</span></div>
+  </header>
+  <div class="qbody" data-fit><div class="col" data-fit><span class="label">IDEIAS-CHAVE</span><ul class="pts"><li>Três <b>modelos semânticos</b>: entrada (<i>in</i>), saída (<i>out</i>) e entrada e saída (<i>inout</i>).</li><li><b>Implementações</b>: por valor, por resultado, por valor-resultado, por referência e por nome.</li><li>Por valor: <b>copia-se</b> o valor. Por referência: passa-se o <b>endereço</b> (alterações são vistas por quem chama).</li><li><b>Java passa tudo por valor</b>: com objetos, copia-se a <b>referência</b>.</li></ul></div><div class="col" data-fit><span class="label g">NAS LINGUAGENS</span><table class="t"><tr><th>Linguagem</th><th>Para alterar a variável de quem chama</th></tr><tr><td>C</td><td>ponteiro: <code>f(&amp;x)</code></td></tr><tr><td>C++</td><td>referência: <code>int &amp;x</code></td></tr><tr><td>Java</td><td>devolver o valor (primitivos)</td></tr><tr><td>C#</td><td><code>ref</code> / <code>out</code></td></tr><tr><td>Python</td><td>devolver o novo valor</td></tr></table><div class="callout b"><b class="h">Pergunte-se</b><ul class="pts"><li>O que exatamente é copiado quando o parâmetro é um objeto?</li><li>Alterar o conteúdo do objeto e reatribuir o parâmetro têm o mesmo efeito para quem chama?</li></ul></div></div></div>
+  <div class="ref">SEBESTA, 11. ed., §9.5.1-9.5.4, p. 376-384.</div>
+</section>
+
+<section class="slide" id="t-fechamentos" data-title="Fechamentos (closures)">
+  <header class="qh">
+    <div class="qn">08</div>
+    <div class="tt"><div class="qt">Fechamentos (closures)</div><div class="qs">Funções que carregam o ambiente onde nasceram</div></div>
+    <div class="chips"><span class="obj">§9.12 · p. 404-406</span></div>
+  </header>
+  <div class="qbody" data-fit><div class="col" data-fit><span class="label">IDEIAS-CHAVE</span><ul class="pts"><li><b>Fechamento</b> = subprograma <b>+</b> o <b>ambiente de referenciamento</b> em que foi criado.</li><li>Captura <b>variáveis</b> (a célula de memória), e <b>não cópias</b> de valores.</li><li>As variáveis capturadas têm <b>extensão ilimitada</b>: sobrevivem ao retorno, então ficam no <b>monte</b>, não na pilha.</li><li>Usos: <b>estado privado</b>, <i>callbacks</i> com contexto, fábricas de funções.</li></ul></div><div class="col" data-fit><span class="label g">PARA PENSAR</span><pre class="code"><code>function contador() {
+  let n = 0;
+  return () =&gt; ++n;     // o que acontece com n?
+}
+const c = contador();
+c(); c();</code></pre><div class="callout b"><b class="h">Pergunte-se</b><ul class="pts"><li>Onde vive <code>n</code> depois que <code>contador</code> retorna?</li><li>Duas funções que enxergam a mesma variável compartilham o valor dela?</li><li>O escopo da variável (uma por função, uma por volta de laço) muda o que é capturado?</li></ul></div></div></div>
+  <div class="ref">SEBESTA, 11. ed., §9.12, p. 404-406.</div>
+</section>
+
+<section class="slide" id="t-tad" data-title="Tipos abstratos de dados e orientação a objetos">
+  <header class="qh">
+    <div class="qn">09</div>
+    <div class="tt"><div class="qt">Tipos abstratos de dados e orientação a objetos</div><div class="qs">Ocultação, herança, composição e vinculação dinâmica</div></div>
+    <div class="chips"><span class="obj">§11.2, §12.2-12.3 · p. 448-450 e 489-498</span></div>
+  </header>
+  <div class="qbody" data-fit><div class="col" data-fit><span class="label">IDEIAS-CHAVE</span><ul class="pts"><li><b>TAD</b>: a <b>representação é oculta</b> e as operações (a interface) ficam em <b>uma unidade</b> (§11.2).</li><li>Ocultar protege a <b>confiabilidade</b> e permite <b>trocar a representação</b> sem quebrar os clientes.</li><li><b>Herança</b> (“é um”) reaproveita e personaliza, mas <b>expõe a interface do pai</b>. <b>Composição</b> (“tem um”) expõe só o necessário.</li><li><b>Vinculação dinâmica</b>: o método é escolhido <b>em execução</b>, pelo <b>tipo do objeto</b>. Em C++, só o que é <code>virtual</code>.</li></ul></div><div class="col" data-fit><span class="label g">COMPARE</span><table class="t"><tr><th></th><th>Herança</th><th>Composição</th></tr><tr><td>Relação</td><td>“é um”</td><td>“tem um”</td></tr><tr><td>Interface</td><td>herda a do pai</td><td>só a que você expõe</td></tr><tr><td>Risco</td><td>violar o contrato do pai</td><td>mais código de repasse</td></tr></table><div class="callout b"><b class="h">Pergunte-se</b><ul class="pts"><li>O que um TAD precisa esconder, e por quê?</li><li>Quando a herança compromete a ocultação?</li><li>O tipo da variável ou o do objeto decide qual método roda?</li></ul></div></div></div>
+  <div class="ref">SEBESTA, 11. ed., §11.2, p. 448-450; §12.2.2-12.2.3, p. 489-493; §12.3, p. 493-498.</div>
+</section>
+
+<section class="slide" id="t-conc" data-title="Concorrência e sincronização">
+  <header class="qh">
+    <div class="qn">10</div>
+    <div class="tt"><div class="qt">Concorrência e sincronização</div><div class="qs">Tarefas, recursos compartilhados e os problemas que surgem</div></div>
+    <div class="chips"><span class="obj">§13.2-13.5 · p. 547-560</span></div>
+  </header>
+  <div class="qbody" data-fit><div class="col" data-fit><span class="label">IDEIAS-CHAVE</span><ul class="pts"><li><b>Condição de corrida</b>: o resultado depende da <b>ordem</b> em que as tarefas executam. Um simples <code>x++</code> é <b>ler, somar e gravar</b>: três passos.</li><li><b>Exclusão mútua</b> evita a corrida: semáforos, monitores (<code>synchronized</code>), mensagens.</li><li><b>Impasse</b> (<i>deadlock</i>): tarefas esperam umas pelas outras em <b>ciclo</b>; o programa <b>congela</b>, sem erro.</li><li>Prevenção: <b>mesma ordem</b> de travas, <code>tryLock</code> com tempo limite, <b>mensagens</b>.</li></ul></div><div class="col" data-fit><span class="label g">COMPARE</span><table class="t"><tr><th></th><th>Corrida</th><th>Impasse</th></tr><tr><td>Efeito</td><td><b>corrompe</b> dados em silêncio</td><td><b>trava</b> o programa</td></tr><tr><td>Causa</td><td>acesso sem sincronização</td><td>espera circular por recursos</td></tr><tr><td>Remédio</td><td>exclusão mútua</td><td>ordem fixa, tempo limite, mensagens</td></tr></table><div class="callout b"><b class="h">Pergunte-se</b><ul class="pts"><li>Por que <code>x++</code> não é uma operação indivisível?</li><li>Que condições formam um ciclo de espera?</li><li>A exclusão mútua pode <i>causar</i> impasse? Como?</li></ul></div></div></div>
+  <div class="ref">SEBESTA, 11. ed., §13.2.1, p. 547-551; §13.3-13.5, p. 552-560.</div>
+</section>
+
+<section class="slide" id="t-func" data-title="Paradigma funcional">
+  <header class="qh">
+    <div class="qn">12</div>
+    <div class="tt"><div class="qt">Paradigma funcional</div><div class="qs">Funções puras, formas funcionais e estado</div></div>
+    <div class="chips"><span class="obj">§15.2-15.3, §15.10-15.11 · p. 633-637 e 674-679</span></div>
+  </header>
+  <div class="qbody" data-fit><div class="col" data-fit><span class="label">IDEIAS-CHAVE</span><ul class="pts"><li><b>Função pura</b>: mesmo argumento, mesmo resultado, <b>sem efeito colateral</b>. Isso é a <b>transparência referencial</b>.</li><li><b>Estado mutável</b> = variáveis, acumuladores e coleções alteradas durante a execução.</li><li><b>Formas funcionais</b>: <code>filter</code> (selecionar), <code>map</code> (aplicar a todos), <code>reduce</code> (combinar) e composição.</li><li>Vantagens: testes simples, <b>paralelismo seguro</b>, memoização. Custos: desempenho e memória.</li></ul></div><div class="col" data-fit><span class="label g">PARA PENSAR</span><pre class="code"><code>[1, 2, 3, 4, 5, 6]
+  .filter(n =&gt; n % 2 === 0)
+  .map(n =&gt; n * n)
+  .reduce((a, n) =&gt; a + n, 0)    // 56</code></pre><div class="callout b"><b class="h">Pergunte-se</b><ul class="pts"><li>Que parte de um laço corresponde ao <code>filter</code>? E ao <code>reduce</code>?</li><li>Por que uma função pura facilita testar e paralelizar?</li><li>O que, em um laço, é “estado mutável”?</li></ul></div></div></div>
+  <div class="ref">SEBESTA, 11. ed., §15.2-15.3, p. 633-637; §15.10-15.11, p. 674-679.</div>
+</section>
+
+<section class="slide" id="t-escolha" data-title="Decisões de projeto e critérios de avaliação">
+  <header class="qh">
+    <div class="qn">∑</div>
+    <div class="tt"><div class="qt">Decisões de projeto e critérios de avaliação</div><div class="qs">Como comparar linguagens e argumentar, em vez de decorar</div></div>
+    <div class="chips"><span class="obj">Cap. 1, §1.3 e Caps. 6 a 15</span></div>
+  </header>
+  <div class="qbody" data-fit><div class="col" data-fit><span class="label">IDEIAS-CHAVE</span><ul class="pts"><li>Cada linguagem é um conjunto de <b>decisões de projeto</b>; cada decisão afeta a <b>legibilidade</b>, a <b>capacidade de escrita</b> e a <b>confiabilidade</b>.</li><li>Para comparar, examine <b>aspectos</b> (tabela ao lado) e ligue cada um a um conteúdo da disciplina.</li><li>Argumente em três passos: <b>critério → conteúdo estudado → consequência</b>.</li><li>Nenhuma escolha elimina todos os riscos: sempre há <b>risco residual</b> e uma <b>prática</b> para reduzi-lo.</li></ul></div><div class="col" data-fit><span class="label g">ASPECTOS PARA COMPARAR</span><table class="t"><tr><th>Aspecto</th><th>Pergunta a fazer</th></tr><tr><td>Índices de matriz</td><td>quem verifica os limites?</td></tr><tr><td>Memória dinâmica</td><td>manual, coleta de lixo ou posse?</td></tr><tr><td>Ausência de valor</td><td><code>null</code> ou tipo opcional?</td></tr><tr><td>Conversões</td><td>implícitas ou explícitas?</td></tr><tr><td>Concorrência</td><td>o que impede a corrida?</td></tr><tr><td>Abstração e reúso</td><td>classes, interfaces, funções?</td></tr></table><div class="callout b"><b class="h">Pergunte-se</b><ul class="pts"><li>Por que o mesmo critério pesa de forma diferente em sistemas diferentes?</li><li>Uma decisão de projeto elimina todos os riscos? O que fazer com os que sobram?</li></ul></div></div></div>
+  <div class="ref">SEBESTA, 11. ed., Cap. 1, §1.3 (critérios de avaliação) e síntese dos Caps. 6, 7, 9, 12, 13 e 15.</div>
+</section>
+
+<section class="slide" id="t-estudar" data-title="Como usar este guia">
+  <header class="qh">
+    <div class="qn">✓</div>
+    <div class="tt"><div class="qt">Como usar este guia</div><div class="qs">Quatro passos para transformar a leitura em domínio</div></div>
+    <div class="chips"><span class="obj">Estudo ativo</span></div>
+  </header>
+  <div class="qbody" data-fit><div class="col" data-fit><span class="label">PASSO A PASSO</span><ul class="pts"><li><b>1. Explique sem olhar.</b> Para cada tópico, escreva com as suas palavras o que é, que problema resolve e que erro causa quando mal usado.</li><li><b>2. Preveja saídas.</b> Execute os exemplos das pastas <code>exemplos/</code> de cada aula (OneCompiler) depois de prever o resultado.</li><li><b>3. Compare linguagens.</b> Monte uma tabela: o que cada linguagem faz diante da mesma decisão de projeto.</li><li><b>4. Refaça os exercícios em dupla</b> das aulas, sem consulta, e confira depois.</li></ul></div><div class="col" data-fit><span class="label g">CHECKLIST</span><ul class="pts"><li>Reais, precisão e tipos decimais</li><li>Ponteiros: solto, perdido, coleta de lixo, posse</li><li>Curto-circuito e efeitos colaterais</li><li>Seleção múltipla e <i>fall-through</i></li><li>Modelos de passagem de parâmetros</li><li>Fechamentos e extensão das variáveis</li><li>TAD, herança × composição, vinculação dinâmica</li><li>Sincronização: o que pode dar errado e como evitar</li><li>Funções puras, <code>map</code>, <code>filter</code>, <code>reduce</code></li><li>Decisões de projeto, critérios e riscos que sobram</li></ul><div class="callout b"><b class="h">Dica</b>Se você consegue explicar o <b>porquê</b> de um mecanismo, e não só o <b>o quê</b>, o tópico está sólido.</div></div></div>
+  <div class="ref">Bons estudos!</div>
+</section>
+</div></div></div>
+
+<div id="prog"></div>
+<div id="notes" role="region" aria-label="Anotações do apresentador"></div>
+<div id="bar">
+  <button id="bprev" title="Slide anterior (←)" aria-label="Anterior">◀</button>
+  <span id="count">1 / 1</span>
+  <button id="bnext" title="Próximo slide (→)" aria-label="Próximo">▶</button>
+  <span class="sp"></span>
+  <button id="clock" title="Cronômetro regressivo de 80 min: clique ou tecla C para iniciar/pausar; Shift+R reinicia">⏱ 80:00</button>
+  <button id="bnotes" aria-pressed="false" title="Mostrar/ocultar anotações (N)">Notas (N)</button>
+  <button id="bpres" title="Abrir janela do apresentador (P)">Apresentador (P)</button>
+  <button id="bfull" title="Tela cheia (F)">Tela cheia (F)</button>
+  <button id="bhelp" title="Atalhos (?)">?</button>
+</div>
+<div id="help" role="dialog" aria-label="Atalhos"><div>
+  <h3>Atalhos</h3>
+  <dl>
+    <dt>→ ␣ PgDn</dt><dd>Próximo slide</dd>
+    <dt>← PgUp</dt><dd>Slide anterior</dd>
+    <dt>Home / End</dt><dd>Primeiro / último slide</dd>
+    <dt>N</dt><dd>Mostrar/ocultar as anotações do apresentador (não use com o projetor ligado)</dd>
+    <dt>P</dt><dd>Abrir a janela do apresentador (arraste-a para o monitor do professor)</dd>
+    <dt>C</dt><dd>Iniciar/pausar o cronômetro de 80 min (Shift+R reinicia)</dd>
+    <dt>A</dt><dd>Revelar/ocultar as respostas do slide de pergunta-relâmpago</dd>
+    <dt>F</dt><dd>Tela cheia</dd>
+    <dt>D</dt><dd>Alternar tema claro/escuro</dd>
+    <dt>Esc</dt><dd>Fechar esta ajuda</dd>
+  </dl>
+</div></div>
+<div id="toast"></div>
+
+<script>
+(function(){
+  var DW = 1280, DH = 720, BAR = 44, TOTAL = 80*60;
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var stage = document.getElementById('stage'), wrap = document.getElementById('wrap'), frame = document.getElementById('frame');
+  var notesEl = document.getElementById('notes'), clock = document.getElementById('clock');
+  var idx = 0, pres = null, remaining = TOTAL, running = false, tickId = null, idleId = null;
+
+  /* ----- realce de código (sem bibliotecas) ----- */
+  var KW = new Set('int double float char void boolean long short byte static final class extends new return if else for while switch case default break continue const let var function true false null try catch throw throws struct public private protected import unsigned sizeof this'.split(' '));
+  function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  document.querySelectorAll('pre.code code').forEach(function(el){
+    var re = /(\/\/[^\n]*)|("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*')|\b(\d+(?:\.\d+)?)\b|\b([A-Za-z_]\w*)\b/g;
+    el.innerHTML = esc(el.textContent).replace(re, function(m,c,s,n,w){
+      if(c) return '<i class="c">'+c+'</i>';
+      if(s) return '<i class="s">'+s+'</i>';
+      if(n) return '<i class="n">'+n+'</i>';
+      return KW.has(w) ? '<i class="k">'+w+'</i>' : m;
+    });
+  });
+
+  /* ----- ajuste automático do tamanho do texto ----- */
+  function fit(){
+    slides.forEach(function(s){
+      var boxes = s.querySelectorAll('[data-fit]');
+      boxes.forEach(function(b){
+        var k = 1; b.style.setProperty('--k', k);
+        b.querySelectorAll('pre.code').forEach(function(p){
+          p.style.fontSize = ''; p.style.whiteSpace = '';
+          if(p.scrollWidth > p.clientWidth + 1){
+            var r = p.clientWidth / p.scrollWidth * 0.97;
+            if(r >= 0.86){ p.style.fontSize = (0.76 * r).toFixed(3) + 'em'; }
+            else { p.style.fontSize = (0.76 * 0.86).toFixed(3) + 'em'; p.style.whiteSpace = 'pre-wrap'; }
+          }
+        });
+        var cols = b.classList.contains('col') ? [b] : Array.prototype.slice.call(b.querySelectorAll('.col'));
+        if(!cols.length) cols = [b];
+        function over(){ return cols.some(function(c){ return c.scrollHeight > c.clientHeight + 1; }) || b.scrollHeight > b.clientHeight + 1; }
+        while(over() && k > 0.55){ k = Math.round((k - 0.03)*100)/100; b.style.setProperty('--k', k); }
+      });
+    });
+  }
+
+  /* ----- escala do palco ----- */
+  function layout(){
+    var notesOn = notesEl.classList.contains('on');
+    var bottom = BAR + (notesOn ? Math.round(window.innerHeight*0.40) : 0);
+    frame.style.bottom = bottom + 'px';
+    var w = window.innerWidth, h = window.innerHeight - bottom;
+    var s = Math.min(w/DW, h/DH);
+    stage.style.transform = 'scale(' + s + ')';
+    wrap.style.width = (DW*s) + 'px'; wrap.style.height = (DH*s) + 'px';
+  }
+
+  /* ----- navegação ----- */
+  function show(n, noHash){
+    idx = Math.max(0, Math.min(slides.length-1, n));
+    slides.forEach(function(s,i){ s.classList.toggle('on', i===idx); s.setAttribute('aria-hidden', i===idx ? 'false' : 'true'); });
+    document.getElementById('count').textContent = (idx+1) + ' / ' + slides.length;
+    document.getElementById('prog').style.width = ((idx+1)/slides.length*100) + '%';
+    if(!noHash){ try{ history.replaceState(null,'','#'+(idx+1)); }catch(e){} }
+    renderNotes(); syncPresenter();
+  }
+  function notesHTML(i){
+    var a = slides[i] && slides[i].querySelector('aside.notes');
+    return a ? a.innerHTML : '<p><em>Sem anotações para este slide.</em></p>';
+  }
+  function renderNotes(){
+    notesEl.innerHTML = '<div class="nh">Anotações do apresentador · não exiba com o projetor ligado</div>' + notesHTML(idx);
+    notesEl.scrollTop = 0;
+  }
+  function next(){ show(idx+1); } function prev(){ show(idx-1); }
+
+  function toggleNotes(){
+    var on = !notesEl.classList.contains('on');
+    notesEl.classList.toggle('on', on);
+    document.getElementById('bnotes').setAttribute('aria-pressed', on ? 'true':'false');
+    layout();
+  }
+
+  /* ----- cronômetro ----- */
+  function fmt(t){ var m = Math.floor(t/60), s = t%60; return (m<10?'0':'')+m+':'+(s<10?'0':'')+s; }
+  function paintClock(){
+    clock.textContent = '⏱ ' + fmt(remaining);
+    clock.className = (running ? 'run ' : '') + (remaining <= 300 ? 'bad' : remaining <= 900 ? 'warn' : '');
+    if(pres && !pres.closed){ var pc = pres.document.getElementById('pclock'); if(pc) pc.textContent = fmt(remaining); }
+  }
+  function tick(){ if(remaining>0){ remaining--; } else { toggleClock(); toast('Tempo esgotado'); } paintClock(); }
+  function toggleClock(){
+    running = !running;
+    if(running){ tickId = setInterval(tick,1000); toast('Cronômetro iniciado'); }
+    else { clearInterval(tickId); toast('Cronômetro pausado'); }
+    paintClock();
+  }
+  function resetClock(){ running=false; clearInterval(tickId); remaining = TOTAL; paintClock(); toast('Cronômetro reiniciado'); }
+
+  /* ----- janela do apresentador ----- */
+  function openPresenter(){
+    if(pres && !pres.closed){ pres.focus(); return; }
+    pres = window.open('', 'prova_presenter', 'width=980,height=720');
+    if(!pres){ toast('Pop-up bloqueado: libere pop-ups ou use a tecla N'); return; }
+    var d = pres.document;
+    d.open();
+    d.write('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Apresentador · Revisão de Paradigmas</title><style>'
+      + 'body{margin:0;font:18px/1.5 "Segoe UI",system-ui,sans-serif;background:#0d151c;color:#e3eaf0;display:flex;flex-direction:column;height:100vh}'
+      + 'header{display:flex;gap:12px;align-items:center;padding:12px 18px;background:#142230;border-bottom:3px solid #ff7c50}'
+      + 'header b{font-size:20px;flex:1}#pclock{font:700 34px ui-monospace,Consolas,monospace;color:#ffb48f}'
+      + 'button{font:inherit;background:#1f3140;color:#e3eaf0;border:1px solid #38505f;border-radius:8px;padding:6px 14px;cursor:pointer}'
+      + 'main{flex:1;overflow:auto;padding:6px 22px 20px}h4{margin:14px 0 4px;color:#ffb48f}ul{padding-left:22px}li{margin:3px 0}'
+      + 'code{background:#1f3140;padding:1px 6px;border-radius:5px}.gab{background:#2a8550;color:#fff;border-radius:8px;padding:2px 10px;font-weight:700}'
+      + 'table{border-collapse:collapse}td,th{border:1px solid #38505f;padding:3px 8px;text-align:left}'
+      + 'footer{padding:10px 18px;background:#142230;color:#98a8b6;font-size:15px}</style></head><body>'
+      + '<header><button id="pp">◀</button><b id="pt"></b><button id="pn">▶</button><span id="pclock"></span></header>'
+      + '<main id="pm"></main><footer id="px"></footer></body></html>');
+    d.close();
+    d.getElementById('pp').onclick = prev; d.getElementById('pn').onclick = next;
+    d.addEventListener('keydown', onKey);
+    syncPresenter(); paintClock();
+  }
+  function syncPresenter(){
+    if(!pres || pres.closed) return;
+    var d = pres.document; if(!d.getElementById('pm')) return;
+    d.getElementById('pt').textContent = (idx+1) + '/' + slides.length + ' · ' + (slides[idx].getAttribute('data-title') || '');
+    d.getElementById('pm').innerHTML = notesHTML(idx);
+    d.getElementById('px').textContent = idx+1 < slides.length ? 'Próximo: ' + (slides[idx+1].getAttribute('data-title') || '') : 'Último slide';
+  }
+
+  /* ----- utilidades ----- */
+  var toastT;
+  function toast(msg){ var t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(function(){ t.classList.remove('on'); }, 1800); }
+  function fullscreen(){ if(document.fullscreenElement){ document.exitFullscreen(); } else if(document.documentElement.requestFullscreen){ document.documentElement.requestFullscreen(); } }
+  function theme(){
+    var r = document.documentElement, dark = r.getAttribute('data-theme') === 'dark' ||
+      (!r.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
+    r.setAttribute('data-theme', dark ? 'light' : 'dark');
+  }
+  function help(on){ document.getElementById('help').classList.toggle('on', on); }
+
+  function onKey(e){
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
+    var k = e.key;
+    if(k==='ArrowRight' || k==='PageDown' || k===' ' || k==='Enter'){ e.preventDefault(); next(); }
+    else if(k==='ArrowLeft' || k==='PageUp' || k==='Backspace'){ e.preventDefault(); prev(); }
+    else if(k==='Home'){ show(0); } else if(k==='End'){ show(slides.length-1); }
+    else if(k==='c' || k==='C'){ toggleClock(); }
+    else if(k==='R'){ resetClock(); }
+    else if(k==='f' || k==='F'){ fullscreen(); }
+    else if(k==='d' || k==='D'){ theme(); }
+    else if(k==='a' || k==='A'){ slides[idx].classList.toggle('rev'); }
+    else if(k==='?'){ help(!document.getElementById('help').classList.contains('on')); }
+    else if(k==='Escape'){ help(false); }
+  }
+  document.addEventListener('keydown', onKey);
+
+  document.getElementById('bprev').onclick = prev; document.getElementById('bnext').onclick = next;
+  document.getElementById('bnotes').onclick = toggleNotes; document.getElementById('bpres').onclick = openPresenter;
+  document.getElementById('bfull').onclick = fullscreen; document.getElementById('bhelp').onclick = function(){ help(true); };
+  clock.onclick = toggleClock;
+  document.getElementById('help').onclick = function(){ help(false); };
+
+  var sx = null;
+  document.addEventListener('touchstart', function(e){ sx = e.touches[0].clientX; }, {passive:true});
+  document.addEventListener('touchend', function(e){ if(sx===null) return; var dx = e.changedTouches[0].clientX - sx; if(Math.abs(dx) > 60){ dx < 0 ? next() : prev(); } sx = null; }, {passive:true});
+
+  function wake(){ document.body.classList.remove('idle'); clearTimeout(idleId); idleId = setTimeout(function(){ document.body.classList.add('idle'); }, 3500); }
+  document.addEventListener('mousemove', wake); wake();
+
+  window.addEventListener('resize', layout);
+  window.addEventListener('hashchange', function(){ var n = parseInt(location.hash.slice(1),10); if(n) show(n-1, true); });
+  window.addEventListener('beforeunload', function(){ if(pres && !pres.closed) pres.close(); });
+
+  var start = parseInt(location.hash.slice(1),10);
+  layout(); show(start ? start-1 : 0, !start); paintClock();
+  fit();
+  if(document.fonts && document.fonts.ready){ document.fonts.ready.then(function(){ fit(); }); }
+  window.addEventListener('load', fit);
+})();
+</script>
+</body>
+</html>

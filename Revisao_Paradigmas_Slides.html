@@ -1,0 +1,1190 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Revisão de Paradigmas</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23142230'/%3E%3Cpath d='M18 44V20h14a8 8 0 010 16H18' fill='none' stroke='%23ff7c50' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@400;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap">
+<style>
+:root{
+  --paper:#e6ecf0; --surface:#ffffff; --surface-2:#eef3f6; --ink:#142230; --muted:#566676; --line:#d6dee5;
+  --a:#d9532a; --a-soft:#fce8df; --b:#11817f; --b-soft:#d9f1ef; --ok:#2a8550; --ok-soft:#e0f3e7;
+  --bad:#c0392b; --warn:#a66a00; --warn-soft:#fff1d6;
+  --code-bg:#0f1b26; --code-ink:#dce6ee; --code-dim:#7f93a6; --code-kw:#7fd8d4; --code-str:#ffb48f; --code-num:#f3d77a;
+  --f-disp:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",Consolas,"Cascadia Mono",monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0a1117; --surface:#141f29; --surface-2:#1a2733; --ink:#e3eaf0; --muted:#98a8b6; --line:#283746;
+  --a:#ff7c50; --a-soft:#3a2219; --b:#3fc3c0; --b-soft:#11302f; --ok:#5ec489; --ok-soft:#14301f;
+  --bad:#ff7b6b; --warn:#f0b14a; --warn-soft:#33270f;
+  --code-bg:#0a121a; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --paper:#0a1117; --surface:#141f29; --surface-2:#1a2733; --ink:#e3eaf0; --muted:#98a8b6; --line:#283746;
+  --a:#ff7c50; --a-soft:#3a2219; --b:#3fc3c0; --b-soft:#11302f; --ok:#5ec489; --ok-soft:#14301f;
+  --bad:#ff7b6b; --warn:#f0b14a; --warn-soft:#33270f;
+  --code-bg:#0a121a; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);overflow:hidden}
+
+/* ---------- palco (1280 x 720, escalado) ---------- */
+#frame{position:fixed;left:0;right:0;top:0;bottom:44px;display:flex;align-items:center;justify-content:center}
+#wrap{position:relative;flex:none}
+#stage{position:absolute;left:0;top:0;width:1280px;height:720px;transform-origin:0 0;
+  background:var(--surface);box-shadow:0 2px 6px rgba(20,34,48,.12),0 18px 48px rgba(20,34,48,.18);overflow:hidden}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;visibility:hidden;
+  transition:opacity .25s ease;font-size:22px;line-height:1.4}
+.slide.on{opacity:1;visibility:visible}
+@media (prefers-reduced-motion:reduce){.slide{transition:none}}
+.notes{display:none}
+
+/* ---------- cabeçalho das questões ---------- */
+.qh{display:flex;align-items:center;gap:20px;padding:0 40px;height:84px;flex:none;
+  background:var(--ink);color:#fff}
+:root[data-theme="dark"] .qh{background:#0d151c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .qh{background:#0d151c}}
+.qn{font:800 44px/1 var(--f-disp);background:var(--a);color:#fff;border-radius:14px;min-width:76px;height:56px;
+  display:grid;place-items:center;letter-spacing:-.02em}
+.qh .tt{flex:1;min-width:0}
+.qt{font:800 27px/1.1 var(--f-disp);letter-spacing:-.01em}
+.qs{font-size:17px;opacity:.82;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chips{display:flex;gap:8px;flex:none}
+.chips span{font:600 15px/1 var(--f-body);padding:8px 12px;border-radius:99px;background:rgba(255,255,255,.14);white-space:nowrap}
+.chips .obj{background:var(--b);color:#fff}
+.chips .abe{background:var(--a);color:#fff}
+
+/* ---------- corpo das questões ---------- */
+.qbody{flex:1;min-height:0;display:grid;grid-template-columns:.92fr 1.12fr;gap:26px;padding:18px 40px 8px;
+  font-size:calc(21px * var(--k,1))}
+.qbody.one{grid-template-columns:1fr}
+.qbody.even{grid-template-columns:1fr 1fr}
+.qbody.one .cmdbox{font-size:1.22em;padding:1em 1.3em}
+.col{min-height:0;min-width:0;overflow:hidden;display:flex;flex-direction:column;gap:.55em}
+.label{align-self:flex-start;font:700 .62em/1 var(--f-body);letter-spacing:.16em;padding:.5em .85em;border-radius:99px;
+  background:var(--a-soft);color:var(--a)}
+.label.cmd{background:var(--b-soft);color:var(--b)}
+.col p{margin:0}
+.cmdbox{background:var(--surface-2);border-left:6px solid var(--b);border-radius:0 14px 14px 0;padding:.7em .95em}
+.v{font-weight:800;color:var(--b);letter-spacing:.01em}
+code{font-family:var(--f-mono);font-size:.86em;background:var(--surface-2);padding:.04em .26em;border-radius:5px;font-variant-ligatures:none}
+pre.code{margin:0;background:var(--code-bg);color:var(--code-ink);border-radius:12px;padding:.7em .9em;
+  font-family:var(--f-mono);font-size:.76em;line-height:1.45;overflow:hidden;white-space:pre;font-variant-ligatures:none}
+pre.code code{background:none;padding:0;font-size:1em;color:inherit}
+pre.code i{font-style:normal}
+pre.code .c{color:var(--code-dim)} pre.code .s{color:var(--code-str)} pre.code .n{color:var(--code-num)} pre.code .k{color:var(--code-kw);font-weight:600}
+pre.code.hl{outline:3px solid var(--a)}
+.codes{display:grid;gap:.5em}
+.codes.two{grid-template-columns:1fr 1fr}
+
+.alts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.45em}
+.alts li{display:flex;gap:.7em;align-items:flex-start;padding:.5em .7em;border:2px solid var(--line);border-radius:12px;background:var(--surface)}
+.alts b{flex:none;width:1.7em;height:1.7em;display:grid;place-items:center;border-radius:50%;background:var(--ink);color:var(--surface);font:800 .85em/1 var(--f-disp)}
+.alts span{font-size:.9em;line-height:1.32}
+.sub{list-style:none;margin:.2em 0 0;padding:0;display:flex;flex-direction:column;gap:.55em}
+.sub li{display:flex;gap:.6em;align-items:flex-start}
+.sub .k{flex:none;font:800 1em/1.35 var(--f-disp);color:var(--a);min-width:1.2em}
+.ref{flex:none;padding:6px 40px 12px;font-size:15px;color:var(--muted);display:flex;gap:10px;align-items:center}
+.ref:before{content:"";width:28px;height:3px;background:var(--a);border-radius:2px}
+
+/* tabela */
+table.t{border-collapse:collapse;width:100%;font-size:.8em}
+table.t th,table.t td{border:1px solid var(--line);padding:.32em .55em;text-align:left;vertical-align:top}
+table.t th{background:var(--ink);color:#fff;font-weight:700}
+:root[data-theme="dark"] table.t th{background:#0d151c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) table.t th{background:#0d151c}}
+table.t td:first-child{font-weight:700;background:var(--surface-2)}
+
+/* ---------- slides de abertura ---------- */
+.cover{background:linear-gradient(135deg,#0f1b26 0%,#142230 55%,#1d3a44 100%);color:#fff;padding:70px 80px;justify-content:center;gap:0}
+.cover:before{content:"";position:absolute;right:-120px;top:-120px;width:520px;height:520px;border-radius:50%;
+  background:radial-gradient(circle,rgba(217,83,42,.55),rgba(217,83,42,0) 68%)}
+.cover:after{content:"";position:absolute;left:0;bottom:0;width:100%;height:10px;background:linear-gradient(90deg,var(--a),#11817f)}
+.cover .kicker{font:700 20px/1 var(--f-body);letter-spacing:.22em;color:#ffb48f;text-transform:uppercase}
+.cover h1{font:800 76px/1.02 var(--f-disp);letter-spacing:-.03em;margin:22px 0 18px;max-width:980px;position:relative}
+.cover .sub2{font-size:27px;opacity:.9;max-width:900px;position:relative}
+.cover .meta{display:flex;gap:14px;margin-top:40px;position:relative}
+.cover .meta span{font:700 22px/1 var(--f-body);padding:13px 20px;border-radius:99px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25)}
+.cover .hint{position:absolute;left:80px;bottom:34px;font-size:16px;opacity:.65}
+
+.page{padding:34px 54px 20px;flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:18px;font-size:calc(22px * var(--k,1))}
+.page h2{font:800 42px/1.05 var(--f-disp);margin:0;letter-spacing:-.02em}
+.page h2 small{display:block;font:600 18px/1 var(--f-body);letter-spacing:.16em;color:var(--a);text-transform:uppercase;margin-bottom:10px}
+.rules{margin:0;padding:0;list-style:none;display:grid;gap:12px;counter-reset:r}
+.rules li{counter-increment:r;display:flex;gap:16px;align-items:flex-start;padding:14px 18px;background:var(--surface-2);border-radius:14px}
+.rules li:before{content:counter(r);flex:none;width:38px;height:38px;border-radius:50%;background:var(--a);color:#fff;
+  display:grid;place-items:center;font:800 20px/1 var(--f-disp)}
+.flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:12px;align-items:stretch}
+.flow .box{padding:16px 18px;border-radius:14px;background:var(--surface-2);border-top:6px solid var(--a)}
+.flow .box.b{border-top-color:var(--b)} .flow .box.g{border-top-color:var(--ok)}
+.flow .box h3{margin:0 0 6px;font:800 22px/1.1 var(--f-disp)}
+.flow .arrow{align-self:center;font-size:34px;color:var(--muted)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:26px;flex:none;font-size:1.1em}
+.verbs td:first-child{font-family:var(--f-disp);font-weight:800;color:var(--b);width:44%;background:none}
+.timeline{display:flex;gap:6px;height:128px;margin-top:6px}
+.seg{border-radius:14px;padding:14px 16px;color:#fff;display:flex;flex-direction:column;justify-content:space-between;min-width:0}
+.seg b{font:800 38px/1 var(--f-disp)} .seg span{font-size:18px;line-height:1.2}
+.seg.s3{min-width:190px}.seg.s4{min-width:140px}.seg.s1{background:var(--b)} .seg.s2{background:var(--a)} .seg.s3{background:#7a4cc2} .seg.s4{background:#5d6d7c}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.card{background:var(--surface-2);border-radius:14px;padding:14px 18px;border-left:6px solid var(--b)}
+.card h3{margin:0;font:800 24px/1.1 var(--f-disp)}
+.card .cap{font-size:16px;color:var(--muted);margin:3px 0 8px}
+.card .qs2{display:flex;gap:6px;flex-wrap:wrap}
+.card .qs2 span{font:800 16px/1 var(--f-body);background:var(--a);color:#fff;border-radius:99px;padding:6px 10px}
+.card.wide{grid-column:1/-1;border-left-color:#7a4cc2}
+.checks{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.checks li{padding:14px 18px 14px 54px;position:relative;background:var(--surface-2);border-radius:14px}
+.checks li:before{content:"";position:absolute;left:18px;top:50%;width:22px;height:22px;margin-top:-11px;border:3px solid var(--b);border-radius:6px}
+
+
+/* ---------- revisão ---------- */
+.pts{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:.5em}
+.pts li{padding-left:1.2em;position:relative;line-height:1.35}
+.pts li:before{content:"";position:absolute;left:0;top:.55em;width:.5em;height:.5em;border-radius:2px;background:var(--a)}
+.callout{background:var(--a-soft);border-left:6px solid var(--a);border-radius:0 14px 14px 0;padding:.6em .9em;line-height:1.35}
+.callout.b{background:var(--b-soft);border-left-color:var(--b)}
+.callout.w{background:var(--warn-soft);border-left-color:var(--warn)}
+.callout b.h{display:block;font:800 .8em/1 var(--f-body);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.35em;color:var(--a)}
+.callout.b b.h{color:var(--b)} .callout.w b.h{color:var(--warn)}
+.label.g{background:var(--b-soft);color:var(--b)} .label.p{background:#ece4f8;color:#6a3fb5}
+.qz{list-style:none;counter-reset:z;padding:0;margin:0;display:flex;flex-direction:column;gap:.7em}
+.qz li{counter-increment:z;background:var(--surface-2);border-radius:14px;padding:.6em .9em .6em 3em;position:relative;line-height:1.35}
+.qz li:before{content:counter(z);position:absolute;left:.8em;top:.65em;width:1.6em;height:1.6em;border-radius:50%;background:var(--a);color:#fff;display:grid;place-items:center;font:800 .85em/1 var(--f-disp)}
+.qz pre.code{margin-top:.4em}
+.ans{display:block;margin-top:.4em;color:var(--ok);font-weight:700;visibility:hidden}
+.slide.rev .ans{visibility:visible}
+.hintkey{color:var(--muted);font-size:.8em}
+.cover.sec h1{font-size:64px}
+.cover.sec .meta span{font-size:20px}
+.diagram{width:100%;height:auto;display:block}
+.diagram text{font-family:var(--f-body);fill:var(--ink)}
+
+/* ---------- barra inferior ---------- */
+#bar{position:fixed;left:0;right:0;bottom:0;height:44px;display:flex;align-items:center;gap:8px;padding:0 12px;
+  background:var(--surface);border-top:1px solid var(--line);font:600 14px/1 var(--f-body);transition:opacity .4s}
+body.idle #bar{opacity:0}
+#bar button{font:inherit;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;
+  height:30px;min-width:32px;padding:0 10px;cursor:pointer}
+#bar button:hover{border-color:var(--b)} #bar button[aria-pressed="true"]{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+#bar .sp{flex:1}
+#count{min-width:64px;text-align:center;color:var(--muted)}
+#prog{position:fixed;left:0;bottom:44px;height:3px;background:var(--a);width:0;transition:width .25s;z-index:5}
+#clock{font-variant-numeric:tabular-nums;min-width:92px}
+#clock.run{border-color:var(--b)} #clock.warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+#clock.bad{background:var(--a-soft);color:var(--bad);border-color:var(--bad)}
+
+/* ---------- anotações ---------- */
+#notes{position:fixed;left:0;right:0;bottom:44px;height:40vh;background:var(--warn-soft);border-top:4px solid var(--warn);
+  display:none;overflow:auto;padding:12px 28px 18px;font-size:17px;line-height:1.45;z-index:6}
+#notes.on{display:block}
+#notes .nh{font:700 13px/1 var(--f-body);letter-spacing:.14em;color:var(--warn);text-transform:uppercase;margin-bottom:8px}
+#notes h4{margin:12px 0 4px;font:800 16px/1.2 var(--f-disp);color:var(--ink)}
+#notes p{margin:4px 0} #notes ul{margin:4px 0;padding-left:22px} #notes li{margin:2px 0}
+#notes .gab{display:inline-block;background:var(--ok);color:#fff;border-radius:8px;padding:2px 10px;font-weight:700}
+#notes code{background:rgba(0,0,0,.08)}
+#notes table{border-collapse:collapse;font-size:15px;margin:6px 0}
+#notes td,#notes th{border:1px solid var(--line);padding:3px 8px;text-align:left}
+
+/* ---------- ajuda ---------- */
+#help{position:fixed;inset:0;background:rgba(10,17,23,.72);display:none;place-items:center;z-index:10}
+#help.on{display:grid}
+#help div{background:var(--surface);border-radius:16px;padding:22px 30px;max-width:520px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+#help h3{margin:0 0 10px;font:800 24px/1 var(--f-disp)}
+#help dl{display:grid;grid-template-columns:auto 1fr;gap:6px 18px;margin:0;font-size:16px}
+#help dt{font:700 14px var(--f-mono);background:var(--surface-2);border-radius:6px;padding:3px 8px;justify-self:start}
+#help dd{margin:0;align-self:center}
+#toast{position:fixed;left:50%;bottom:64px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;
+  font-size:15px;opacity:0;pointer-events:none;transition:opacity .3s;z-index:12}
+#toast.on{opacity:1}
+</style>
+</head>
+<body>
+<div id="frame"><div id="wrap"><div id="stage">
+
+<section class="slide cover on" id="capa" data-title="Capa">
+  <div class="kicker">Unicesumar · Engenharia de Software</div>
+  <h1>Revisão para a Prova de Paradigmas</h1>
+  <div class="sub2">Tipos de dados · Expressões e controle · Subprogramas · TAD e OO · Concorrência · Funcional</div>
+  <div class="meta"><span>Aulas 06 a 12</span><span>Sebesta, 11. ed.</span><span>Revisão guiada</span></div>
+  <div class="hint">Atalhos: → avança · A revela respostas · C cronômetro · ? ajuda</div>
+  <aside class="notes">
+    <h4>Como usar esta revisão</h4>
+    <ul>
+      <li>É uma revisão <b>conceitual</b>, inspirada nos slides e nos exemplos das aulas 06, 07, 08, 09, 10 e 12. Ela <b>não reproduz as questões da prova</b>: cobre os conceitos e os tipos de raciocínio que a prova exige.</li>
+      <li>Cada aula tem uma abertura, de 3 a 5 slides de conteúdo e uma <b>pergunta-relâmpago</b> final. Nos slides de pergunta, as respostas ficam ocultas: tecla <b>A</b> as revela no slide; o comentário completo está nas anotações.</li>
+      <li>Pressione <b>N</b> para ver estas anotações (não use com o projetor ligado) ou <b>P</b> para abrir a janela do apresentador no seu notebook.</li>
+      <li>Os blocos são independentes: se o tempo for curto, escolha as aulas em que a turma tem mais dúvida.</li>
+    </ul>
+    <h4>Tempo total sugerido: 90 min</h4>
+    <p>Abertura 5 min · Aulas 06 a 12: de 10 a 14 min cada · Integração e dicas 8 min. O cronômetro (tecla C) é opcional.</p>
+  </aside>
+</section>
+
+<section class="slide" id="roteiro" data-title="Roteiro da revisão">
+  <header class="qh">
+    <div class="qn">0</div>
+    <div class="tt"><div class="qt">Roteiro da revisão</div><div class="qs">O que vamos rever e em que ordem</div></div>
+    <div class="chips"><span class="obj">90 min</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">BLOCOS</span><table class="t"><tr><th>Bloco</th><th>Tema</th><th>Sebesta</th></tr><tr><td>Aula 06</td><td>Tipos de dados: inteiros, reais, cadeias, matrizes, ponteiros, null e uniões</td><td>cap. 6</td></tr><tr><td>Aula 07</td><td>Expressões e controle: precedência, coerção, curto-circuito, seleção e laços</td><td>caps. 7 e 8</td></tr><tr><td>Aula 08</td><td>Subprogramas: parâmetros, passagem, fechamentos e pilha</td><td>caps. 9 e 10</td></tr><tr><td>Aula 09</td><td>TAD e orientação a objetos: ocultação, herança e vinculação dinâmica</td><td>caps. 11 e 12</td></tr><tr><td>Aula 10</td><td>Concorrência: corrida, impasse, semáforos, monitores, mensagens e async</td><td>cap. 13</td></tr><tr><td>Aula 12</td><td>Paradigma funcional: funções puras, lambda, pipelines e Scheme/Haskell</td><td>cap. 15</td></tr><tr><td>Final</td><td>Quadro-resumo das escolhas de projeto e como responder questões abertas</td><td>cap. 1</td></tr></table></div><div class="col" data-fit><span class="label">COMO ESTUDAR</span><ul class="pts"><li>Para cada conceito, saiba dizer <b>o que é</b>, <b>qual problema resolve</b> e <b>qual erro causa</b> quando mal usado.</li><li>Compare linguagens: a prova pede decisões de projeto, não decorar sintaxe.</li><li>Prever a saída de um trecho curto vale muito: treine com os exemplos das aulas.</li><li>Leia o <b>verbo do comando</b> antes de responder.</li></ul><div class="callout b"><b class="h">Lente do curso</b>Toda linguagem responde às mesmas perguntas de projeto. As diferenças entre Java, C, Rust, Go e Python são <b>respostas diferentes</b> a essas perguntas.</div></div></div>
+  <div class="ref">SEBESTA, 11. ed., caps. 6 a 13 e 15.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Apresente o mapa da revisão. Reforce que o curso inteiro tem uma lente única: escolhas de projeto e suas consequências em legibilidade, escrita e confiabilidade.</p><h4>Pontos que não podem faltar</h4><ul><li>Os seis blocos correspondem às aulas 06, 07, 08, 09, 10 e 12 (a pasta de materiais não traz a Aula 11).</li><li>A prova tem 3 objetivas e 7 abertas; todas pedem prever, explicar, comparar ou propor, com código curto.</li><li>Peça que a turma anote dúvidas ao longo da revisão e volte a elas no fim.</li></ul><h4>Pergunta para a turma</h4><p>Qual linguagem do curso vocês acham mais 'segura'? Por quê? (Retome ao fim.)</p><p class="hintkey">Tempo sugerido: 4 min</p></aside>
+</section>
+
+<section class="slide" id="verbos" data-title="Como responder às questões">
+  <header class="qh">
+    <div class="qn">0</div>
+    <div class="tt"><div class="qt">Como responder às questões</div><div class="qs">O verbo do comando define a resposta</div></div>
+    <div class="chips"><span class="obj">Dica de prova</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">VERBOS E RESPOSTAS</span><table class="t"><tr><th>Verbo</th><th>A resposta precisa trazer</th></tr><tr><td>IDENTIFIQUE · NOMEIE</td><td>O conceito e o nome correto</td></tr><tr><td>DETERMINE</td><td>O resultado (saída, valor) <b>e</b> o raciocínio</td></tr><tr><td>EXPLIQUE · JUSTIFIQUE</td><td>Causa e efeito: o porquê</td></tr><tr><td>COMPARE · DIFERENCIE</td><td>Semelhanças e diferenças, com critério</td></tr><tr><td>PROPONHA · REESCREVA</td><td>A solução (código, projeto, estratégia)</td></tr><tr><td>ANALISE · ESCOLHA</td><td>Examinar, decidir e fundamentar</td></tr></table></div><div class="col" data-fit><span class="label">MODELO DE RESPOSTA ABERTA</span><ul class="pts"><li><b>1.</b> Afirme: dê o nome do conceito ou o resultado.</li><li><b>2.</b> Justifique: explique o mecanismo na linguagem do curso.</li><li><b>3.</b> Evidencie: aponte a linha do código ou o exemplo.</li><li><b>4.</b> Conclua: consequência ou solução em uma frase.</li></ul><div class="callout w"><b class="h">Atenção</b>Responder só o que sabe, e não o que o verbo pede, faz perder pontos. Cada item (a, b, c) vale uma parte da nota.</div></div></div>
+  <div class="ref">Modelo de questão estilo ENEM: contexto + comando.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Antes do conteúdo, treine a leitura do comando. Mostre que a mesma situação pode gerar respostas diferentes dependendo do verbo.</p><h4>Pontos que não podem faltar</h4><ul><li>Nas objetivas, o verbo também existe (ANALISE, ASSINALE, DETERMINE).</li><li>Nas abertas, os itens a), b), c) pontuam separadamente: não deixe item em branco.</li><li>Justificar é obrigatório: 'porque o Java passa por valor' ganha; só 'oi! 99 10' não ganha tudo.</li></ul><h4>Pergunta para a turma</h4><p>O que muda entre DETERMINE a saída e EXPLIQUE a saída?</p><p class="hintkey">Tempo sugerido: 3 min</p></aside>
+</section>
+
+<section class="slide cover sec" id="s06" data-title="Aula 06 · Tipos de dados">
+  <div class="kicker">Aula 06 · Sebesta</div>
+  <h1>Tipos de dados</h1>
+  <div class="sub2">Inteiros · ponto flutuante e decimal · cadeias · matrizes · ponteiros · null e uniões</div>
+  <div class="meta"><span>Sebesta, cap. 6</span><span>p. 233-297</span></div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Abra com os casos reais: Ariane 5 (inteiro de 16 bits estourou), Patriot (0,1 não é exato em binário) e Heartbleed (sem verificação de índices). Cada tipo mal escolhido tem um preço.</p><h4>Pontos que não podem faltar</h4><ul><li>Tipo de dado = coleção de valores + operações predefinidas (p. 234).</li><li>A pergunta de projeto é sempre: quais operações o tipo oferece e como?</li></ul><p class="hintkey">Tempo sugerido: 1 min</p></aside>
+</section>
+
+<section class="slide" id="a06-int" data-title="Inteiros: o tamanho é decisão de projeto">
+  <header class="qh">
+    <div class="qn">06</div>
+    <div class="tt"><div class="qt">Inteiros: o tamanho é decisão de projeto</div><div class="qs">O que acontece quando o valor passa do limite?</div></div>
+    <div class="chips"><span class="obj">§6.2.1.1, p. 236-237</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">IDEIA</span><ul class="pts"><li>Com sinal, em <b>complemento de dois</b>: n bits vão de −2ⁿ⁻¹ até 2ⁿ⁻¹−1 (int: −2.147.483.648 a 2.147.483.647).</li><li>Java e C <b>dão a volta em silêncio</b>; Rust deixa o programador escolher; Python não tem estouro.</li><li>Sem sinal (<i>unsigned</i>): C, C++, C#, Go e Rust têm; Java não tem.</li></ul><div class="callout "><b class="h">Caso real</b>Em 2014, o contador do vídeo “Gangnam Style” passou de 2.147.483.647 e o YouTube migrou para 64 bits. Em 1996, o Ariane 5 explodiu por um float de 64 bits convertido para inteiro de 16 bits.</div></div><div class="col" data-fit><span class="label g">CÓDIGO</span><pre class="code "><code>// Java: dá a volta, sem aviso
+int x = Integer.MAX_VALUE;
+System.out.println(x + 1);        // -2147483648
+Math.addExact(x, 1);              // ArithmeticException
+
+// Rust: o programador escolhe
+x.checked_add(1)      // None
+x.wrapping_add(1)     // -2147483648
+x.saturating_add(1)   // 2147483647
+
+# Python: não existe estouro
+print(2**100)   # 1267650600228229401496703205376</code></pre></div></div>
+  <div class="ref">SEBESTA, 11. ed., §6.2.1.1, p. 236-237.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>O tamanho do inteiro é parte do projeto da linguagem. Compare as três filosofias: silêncio (Java, C, Go), escolha explícita (Rust) e precisão ilimitada (Python).</p><h4>Pontos que não podem faltar</h4><ul><li>Estouro silencioso é fonte de bugs graves: Ariane 5, contadores de 32 bits.</li><li>Math.addExact lança exceção; é a forma de 'ligar' a verificação em Java.</li><li>Python: int sem limite; JavaScript: Number é double, e BigInt para inteiros grandes.</li></ul><h4>Pergunta para a turma</h4><p>Por que o Java não tem inteiro sem sinal e o C tem?</p><h4>Dica de estudo</h4><p>Monte uma tabelinha: linguagem × o que faz no estouro.</p><p class="hintkey">Tempo sugerido: 2 min</p></aside>
+</section>
+
+<section class="slide" id="a06-float" data-title="Ponto flutuante e decimal">
+  <header class="qh">
+    <div class="qn">06</div>
+    <div class="tt"><div class="qt">Ponto flutuante e decimal</div><div class="qs">Dinheiro não é double</div></div>
+    <div class="chips"><span class="obj">§6.2.1.2 e §6.2.1.4, p. 237-239</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">IDEIA</span><ul class="pts"><li>O IEEE 754 guarda número finito de bits: <b>0,1 é dízima em binário</b> e não tem representação exata.</li><li><code>float</code> (32 bits) ≈ 7 dígitos; <code>double</code> (64 bits) ≈ 15-16.</li><li>Nunca compare reais com <code>==</code>: use tolerância.</li><li>Para dinheiro: <b>tipo decimal</b> (COBOL, C#, F#; <code>BigDecimal</code>, <code>Decimal</code> por biblioteca) ou <b>centavos em inteiro</b>.</li></ul><div class="callout w"><b class="h">Armadilha</b><code>new BigDecimal(0.1)</code> herda o erro do double. Use a <b>string</b>: <code>new BigDecimal("0.1")</code>.</div></div><div class="col" data-fit><span class="label g">CÓDIGO</span><pre class="code "><code>// JavaScript: um único tipo numérico (double)
+0.1 * 3 === 0.3                      // false
+Math.abs(0.1 + 0.2 - 0.3) &lt; Number.EPSILON   // true
+2 ** 53 + 1      // 9007199254740992  (perdeu 1)
+2n ** 53n + 1n   // 9007199254740993n (BigInt)
+
+// Java: decimal exato
+new BigDecimal("0.1").add(new BigDecimal("0.2"))   // 0.3
+new BigDecimal(0.1)   // 0.1000000000000000055511...</code></pre></div></div>
+  <div class="ref">SEBESTA, 11. ed., §6.2.1.2 e §6.2.1.4, p. 237-239.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>O erro não é do JavaScript: todas as linguagens que seguem IEEE 754 têm o mesmo comportamento. Pergunte: 'em Python, 0.1 + 0.2 dá o quê?' (0.30000000000000004).</p><h4>Pontos que não podem faltar</h4><ul><li>Causa: representação binária finita de uma dízima.</li><li>Solução: decimal ou centavos em inteiro.</li><li>Caso real: míssil Patriot (1991), 0,1 s truncado em 24 bits, 0,34 s de atraso após 100 h.</li></ul><h4>Pergunta para a turma</h4><p>Se a loja soma 10 itens de R$ 0,10 em double, o que pode acontecer com a nota fiscal?</p><h4>Dica de estudo</h4><p>Treine a frase: 'o valor não é exato em binário, por isso a soma acumula erro; usar decimal ou centavos'.</p><p class="hintkey">Tempo sugerido: 2 min</p></aside>
+</section>
+
+<section class="slide" id="a06-idx" data-title="Cadeias e matrizes: verificação de índices">
+  <header class="qh">
+    <div class="qn">06</div>
+    <div class="tt"><div class="qt">Cadeias e matrizes: verificação de índices</div><div class="qs">Quem confere os limites?</div></div>
+    <div class="chips"><span class="obj">§6.3 e §6.5, p. 240-255</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">IDEIA</span><ul class="pts"><li>Cadeia: tipo primitivo ou matriz de caracteres? Tamanho estático ou dinâmico? Mutável ou imutável?</li><li>Em C, <code>strcpy</code> não conhece o tamanho do destino: <b>estouro de buffer</b>. Em Java, <code>==</code> compara referências; use <code>equals</code>.</li><li>Contar “caracteres” depende da codificação: bytes (Go, Rust <code>len</code>), unidades UTF-16 (Java, JS), <i>code points</i> (Python).</li><li><b>Fatias</b>: em Go compartilham a memória; em Python são cópia.</li></ul></div><div class="col" data-fit><span class="label g">O QUE ACONTECE COM v[3] EM v[3]?</span><table class="t"><tr><th>Linguagem</th><th>Acesso fora do limite</th></tr><tr><td>C</td><td>comportamento indefinido (lixo, corrupção ou travamento)</td></tr><tr><td>JavaScript</td><td><code>undefined</code>, sem erro</td></tr><tr><td>Java</td><td><code>ArrayIndexOutOfBoundsException</code></td></tr><tr><td>Go / Rust</td><td><i>panic</i> (Rust: <code>v.get(3)</code> devolve <code>None</code>)</td></tr><tr><td>Python</td><td><code>IndexError</code> (e <code>v[-1]</code> é o último!)</td></tr></table><div class="callout w"><b class="h">Heartbleed (2014)</b>O OpenSSL, em C, confiou no tamanho informado pelo cliente e devolveu até 64 KB de memória. Com verificação de índices, seria só uma exceção.</div></div></div>
+  <div class="ref">SEBESTA, 11. ed., §6.3 e §6.5, p. 240-255.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>O ponto central é <b>quem verifica o índice</b>: o programador (C) ou a linguagem em execução (Java, Go, Rust, Python). A diferença entre 'erro detectado' e 'vulnerabilidade'.</p><h4>Pontos que não podem faltar</h4><ul><li>Heartbleed é o exemplo de confiabilidade perdida por falta de verificação.</li><li>Cadeias imutáveis (Java, Python, JS) × mutáveis (C, StringBuilder).</li><li>len('ação') em Go dá 6 bytes; em Python, 4.</li></ul><h4>Pergunta para a turma</h4><p>Por que a mesma 'string' tem tamanhos diferentes em Go e em Python?</p><p class="hintkey">Tempo sugerido: 2 min</p></aside>
+</section>
+
+<section class="slide" id="a06-ptr" data-title="Ponteiros e referências">
+  <header class="qh">
+    <div class="qn">06</div>
+    <div class="tt"><div class="qt">Ponteiros e referências</div><div class="qs">O que dá errado e como as linguagens evitam</div></div>
+    <div class="chips"><span class="obj">§6.11, p. 273-285</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">PROBLEMAS (Sebesta, p. 275-277)</span><ul class="pts"><li><b>Ponteiro solto</b> (<i>dangling</i>): aponta para memória que já foi liberada (ou saiu de escopo). Usar é comportamento indefinido.</li><li><b>Variável do monte perdida</b>: foi alocada, mas ninguém mais a alcança: <b>vazamento</b> de memória.</li><li>Ponteiros permitem <b>apelidos</b>: liberar por um nome deixa o outro solto.</li></ul><pre class="code "><code>int *cria(void) {
+    int local = 42;
+    return &amp;local;      // pilha que vai sumir
+}
+char *buf = malloc(100);
+buf = NULL;             // bloco perdido: vazamento</code></pre></div><div class="col" data-fit><span class="label g">COMO AS LINGUAGENS EVITAM</span><table class="t"><tr><th>Linguagem</th><th>Mecanismo</th></tr><tr><td>C</td><td><code>malloc</code> / <code>free</code> manuais, aritmética de ponteiros</td></tr><tr><td>Java</td><td>referências + <b>coleta de lixo</b>; sem aritmética, sem <code>free</code></td></tr><tr><td>Go</td><td>ponteiros sem aritmética + coleta de lixo; <i>escape analysis</i> torna <code>return &amp;local</code> seguro</td></tr><tr><td>Rust</td><td><b>posse e empréstimo</b>: o compilador prova que não há ponteiro solto, sem coletor</td></tr></table></div></div>
+  <div class="ref">SEBESTA, 11. ed., §6.11.3-6.11.7, p. 275-285.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Treine o vocabulário: ponteiro solto × variável do monte perdida. Depois a comparação: GC (Java/Go) × posse (Rust) × manual (C).</p><h4>Pontos que não podem faltar</h4><ul><li>Solto = usar depois de liberar. Perdida = perder a referência sem liberar.</li><li>Coleta de lixo tira o <code>free</code> do programador; Rust move a verificação para a compilação.</li><li>Hoare chamou os ponteiros de 'um passo para trás' (p. 280).</li></ul><h4>Pergunta para a turma</h4><p>Se o Rust não tem coletor de lixo, como evita o ponteiro solto?</p><h4>Dica de estudo</h4><p>Se a prova mostrar um trecho em C com free e um apelido, descreva o que cada ponteiro aponta depois do free.</p><p class="hintkey">Tempo sugerido: 3 min</p></aside>
+</section>
+
+<section class="slide" id="a06-null" data-title="null e uniões discriminadas">
+  <header class="qh">
+    <div class="qn">06</div>
+    <div class="tt"><div class="qt">null e uniões discriminadas</div><div class="qs">O erro de um bilhão de dólares</div></div>
+    <div class="chips"><span class="obj">§6.10 e §6.11, p. 270-280</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">IDEIA</span><ul class="pts"><li><b>União livre</b> (C): os campos dividem a memória e nada diz qual está em uso: lixo ao ler o campo errado.</li><li><b>União discriminada</b> (Rust <code>enum</code>, TypeScript, Java 21 <code>sealed</code>): uma <b>etiqueta</b> diz o tipo atual e o <code>match</code> é exaustivo.</li><li><code>null</code>: Tony Hoare o chama de “erro de um bilhão de dólares”.</li><li><code>Option</code> / <code>Optional</code> usam união discriminada no lugar de <code>null</code>: esquecer o caso <code>None</code> <b>não compila</b>.</li></ul></div><div class="col" data-fit><span class="label g">CÓDIGO</span><pre class="code "><code>// Rust: Option é uma união discriminada
+fn buscar(id: u32) -&gt; Option&lt;String&gt; {
+    if id == 1 { Some("Ana".into()) } else { None }
+}
+match buscar(2) {
+    Some(nome) =&gt; println!("{}", nome),
+    None       =&gt; println!("não achei"),
+}   // esquecer o None: erro de compilação
+
+// Java: Optional
+buscar(2).map(String::length).orElse(0);   // 0</code></pre></div></div>
+  <div class="ref">SEBESTA, 11. ed., §6.10 e §6.11, p. 270-280.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Feche o bloco ligando duas ideias: 'união + etiqueta' dá segurança de tipos; 'Option' é o uso mais comum.</p><h4>Pontos que não podem faltar</h4><ul><li>Livre = responsabilidade do programador; discriminada = compilador verifica.</li><li>Linguagens com tipos anuláveis checados: Kotlin (String?), TypeScript (strictNullChecks), C#, Swift.</li></ul><h4>Pergunta para a turma</h4><p>Que tipo de erro o <code>match</code> exaustivo impede?</p><p class="hintkey">Tempo sugerido: 2 min</p></aside>
+</section>
+
+<section class="slide" id="q06" data-title="Pergunta-relâmpago · Aula 06">
+  <header class="qh">
+    <div class="qn">06</div>
+    <div class="tt"><div class="qt">Pergunta-relâmpago · Aula 06</div><div class="qs">Preveja a saída antes de revelar (tecla A)</div></div>
+    <div class="chips"><span class="obj">3 perguntas</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">PREVEJA</span><ol class="qz"><li>JavaScript: <code>console.log(0.1 * 3 === 0.3)</code><span class="ans">→ <code>false</code> (0,1 não é exato em binário)</span></li><li>Python: <code>p = "maçã"; print(len(p), len(p.encode()))</code><span class="ans">→ <code>4 6</code> (code points × bytes UTF-8)</span></li><li>Go: <code>var b byte = 255; b++; fmt.Println(b)</code><span class="ans">→ <code>0</code> (estouro silencioso volta a 0)</span></li></ol></div><div class="col" data-fit><span class="label">PERGUNTE TAMBÉM</span><ul class="pts"><li>O problema é detectado na <b>compilação</b>, na <b>execução</b> ou <b>nunca</b>?</li><li>Qual alternativa de projeto evitaria o erro?</li></ul><div class="callout b"><b class="h">Dica</b>Para cada trecho, diga: (a) a saída; (b) a regra de projeto que a explica.</div></div></div>
+  <div class="ref">Exercício em duplas da Aula 06 (exemplos/08_exercicio).</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Deixe a turma responder em voz alta; revele com a tecla A. É o exercício em duplas da Aula 06, útil para fixar.</p><h4>Pontos que não podem faltar</h4><ul><li>1: IEEE 754, 0.1*3 = 0.30000000000000004.</li><li>2: 'maçã' tem 4 caracteres e 6 bytes em UTF-8 (ç e ã ocupam 2 bytes cada).</li><li>3: byte sem sinal de 8 bits: 255 + 1 volta a 0, sem aviso (Go não verifica).</li></ul><p class="hintkey">Tempo sugerido: 2 min</p></aside>
+</section>
+
+<section class="slide cover sec" id="s07" data-title="Aula 07 · Expressões, atribuição e controle">
+  <div class="kicker">Aula 07 · Sebesta</div>
+  <h1>Expressões, atribuição e controle</h1>
+  <div class="sub2">Precedência · coerção · curto-circuito · seleção · laços · goto</div>
+  <div class="meta"><span>Sebesta, caps. 7 e 8</span><span>p. 299-361</span></div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Casos reais: 'goto fail' da Apple (uma linha duplicada pulou a verificação de certificado), Zune (laço sem progresso) e PHP com == em hashes. O controle de fluxo não faz o que o código parece fazer.</p><h4>Pontos que não podem faltar</h4><ul><li>Programar bem é ler código sem ser enganado por precedência, conversão e desvio.</li></ul><p class="hintkey">Tempo sugerido: 1 min</p></aside>
+</section>
+
+<section class="slide" id="a07-expr" data-title="Precedência, associatividade e efeitos colaterais">
+  <header class="qh">
+    <div class="qn">07</div>
+    <div class="tt"><div class="qt">Precedência, associatividade e efeitos colaterais</div><div class="qs">Em que ordem a expressão é avaliada?</div></div>
+    <div class="chips"><span class="obj">§7.2, p. 300-309</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">IDEIA</span><ul class="pts"><li>Precedência: qual operador primeiro. Associatividade: o que fazer com operadores iguais (esquerda ou direita).</li><li><code>**</code> é associativo à direita: <code>2 ** 3 ** 2 = 512</code>.</li><li>Na dúvida, <b>use parênteses</b> (p. 305).</li><li><b>Efeito colateral</b>: a função altera algo além do valor devolvido. A ordem de avaliação dos operandos passa a importar.</li></ul><div class="callout b"><b class="h">Transparência referencial</b>Sem efeitos colaterais, <code>f(x) + f(x)</code> pode virar <code>2 * f(x)</code>. Conecta com o paradigma funcional (Aula 12).</div></div><div class="col" data-fit><span class="label g">CÓDIGO</span><pre class="code "><code># Python
+print(-2 ** 2)       # -4   (** antes do menos unário)
+print(2 ** 3 ** 2)   # 512  (direita para a esquerda)
+
+// Java: a ordem é garantida (esquerda para direita)
+System.out.println(1 + 2 + "3" + 4 + 5);   // 3345
+
+/* C: ordem NÃO definida pelo padrão */
+int a = 5;
+int fun1(void) { a = 17; return 3; }
+a = a + fun1();    /* 8 ou 20? */</code></pre></div></div>
+  <div class="ref">SEBESTA, 11. ed., §7.2, p. 300-309.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Mostre que 'a + fun1()' pode dar 8 ou 20 conforme a linguagem: Java fixa a ordem (8), C e Go não definem (20 no gcc).</p><h4>Pontos que não podem faltar</h4><ul><li>Associatividade à direita: **, ++, --, menos unário.</li><li>Efeitos colaterais + ordem não definida = resultado imprevisível.</li><li>O Excel faz =-2^2 dar 4: o menos unário vence ali.</li></ul><h4>Pergunta para a turma</h4><p>Qual a saída de 1 + 2 + "3" + 4 + 5 em Java? E por quê?</p><p class="hintkey">Tempo sugerido: 2 min</p></aside>
+</section>
+
+<section class="slide" id="a07-coer" data-title="Conversões e coerção">
+  <header class="qh">
+    <div class="qn">07</div>
+    <div class="tt"><div class="qt">Conversões e coerção</div><div class="qs">Quando a linguagem converte por você</div></div>
+    <div class="chips"><span class="obj">§7.4, p. 310-313</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">IDEIA</span><ul class="pts"><li><b>Alargamento</b> (int → long, int → double) costuma ser seguro; <b>estreitamento</b> perde informação e exige <i>cast</i>.</li><li><b>Coerção</b>: conversão implícita. Esconde erros (p. 312).</li><li>Go e Rust exigem conversão <b>explícita</b> (<code>float64(i)</code>, <code>i as f64</code>).</li><li>JavaScript e PHP convertem tipos em comparações: use <code>===</code> e <code>!==</code>.</li></ul><div class="callout w"><b class="h">Caso real</b>No PHP, <code>"0e123" == "0e456"</code> é verdadeiro: logins que comparavam hashes com <code>==</code> aceitavam senhas erradas.</div></div><div class="col" data-fit><span class="label g">CÓDIGO</span><pre class="code "><code>// JavaScript
+"5" - 2       // 3
+"5" + 2       // "52"
+true + 1      // 2
+null + 1      // 1
+undefined + 1 // NaN
+0 == ""       // true
+"" == "0"     // false
+0 == "0"      // true   (não é transitivo!)
+0 === "0"     // false  (=== não converte)
+
+// Java
+int grande = 123456789;
+float f = grande;           // alargamento implícito
+System.out.println((int) f);   // 123456792
+System.out.println(1 / 2);     // 0 (divisão inteira)</code></pre></div></div>
+  <div class="ref">SEBESTA, 11. ed., §7.4, p. 310-313.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Mostre o contraste: C/JS/PHP convertem; Go/Rust exigem explícito. A coerção torna o código mais curto e menos confiável.</p><h4>Pontos que não podem faltar</h4><ul><li>== do JS não é transitivo: 0 == '' e 0 == '0', mas '' != '0'.</li><li>Divisão inteira em Java: 1/2 = 0 e 1/2.0 = 0.5.</li><li>Armadilha: <code>acertos / total * 100</code> com inteiros dá 0.0.</li></ul><h4>Pergunta para a turma</h4><p>Qual é o risco de usar == em vez de === em JavaScript?</p><p class="hintkey">Tempo sugerido: 2 min</p></aside>
+</section>
+
+<section class="slide" id="a07-bool" data-title="Expressões booleanas e curto-circuito">
+  <header class="qh">
+    <div class="qn">07</div>
+    <div class="tt"><div class="qt">Expressões booleanas e curto-circuito</div><div class="qs">Nem todo operando é avaliado</div></div>
+    <div class="chips"><span class="obj">§7.5 e §7.6, p. 313-317</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">IDEIA</span><ul class="pts"><li><code>&amp;&amp;</code> e <code>||</code> fazem <b>curto-circuito</b>: param assim que o resultado é conhecido. <code>&amp;</code> e <code>|</code> (bit a bit/booleanos) avaliam sempre os dois lados.</li><li>O curto-circuito protege acessos: <code>i &lt; n &amp;&amp; v[i] != x</code> não lê fora do vetor.</li><li><b>Cuidado:</b> efeitos colaterais no 2º operando podem não ocorrer.</li><li>C, Python e JS aceitam qualquer valor no <code>if</code> (0, vazio e nulo são falsos); Java, Go e Rust exigem booleano.</li></ul></div><div class="col" data-fit><span class="label g">CÓDIGO</span><pre class="code "><code>// Java
+String s = null;
+s != null &amp;&amp; s.length() &gt; 0   // false
+s != null &amp;  s.length() &gt; 0   // NullPointerException
+
+// JavaScript: ?. e ??
+const u = { nome: "Ana", endereco: null };
+u.endereco?.cidade     // undefined, sem erro
+const qtd = 0;
+qtd || 10              // 10  (o 0 se perdeu!)
+qtd ?? 10              // 0   (só troca null/undefined)
+
+# Python: and/or devolvem um dos operandos
+0 or "padrão"          # "padrão"
+3 &gt; 2 &gt; 1              # True: (3&gt;2) and (2&gt;1)</code></pre></div></div>
+  <div class="ref">SEBESTA, 11. ed., §7.5-7.6, p. 313-317.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Reforce o uso defensivo: verificar antes de acessar. Esse padrão é o mesmo da busca do livro (p. 316).</p><h4>Pontos que não podem faltar</h4><ul><li>&& evita NullPointerException e acesso fora do limite.</li><li>|| com valor 0 é armadilha: use ?? em JS.</li><li>Em C, 3 > 2 > 1 é 0: (3>2)=1 e 1>1 é falso.</li></ul><h4>Pergunta para a turma</h4><p>Em quais situações o curto-circuito evita um erro de execução?</p><h4>Dica de estudo</h4><p>Se a prova mostrar & no lugar de &&, pergunte-se: o 2º operando é avaliado mesmo com o 1º falso?</p><p class="hintkey">Tempo sugerido: 2 min</p></aside>
+</section>
+
+<section class="slide" id="a07-sel" data-title="Seleção: else pendente e switch">
+  <header class="qh">
+    <div class="qn">07</div>
+    <div class="tt"><div class="qt">Seleção: else pendente e switch</div><div class="qs">Quando o fluxo 'cai' ou se perde</div></div>
+    <div class="chips"><span class="obj">§8.2, p. 330-341</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">IDEIA</span><ul class="pts"><li><b>else pendente</b>: em C, Java, C++ e C#, o <code>else</code> pertence ao <code>if</code> mais próximo <b>sem else</b>. A endentação é ignorada.</li><li>Chaves obrigatórias (Go, Rust, Perl) eliminam o problema.</li><li><b>switch</b> do C: sem <code>break</code>, o controle <b>cai</b> (<i>fall-through</i>) para o caso seguinte.</li><li>Alternativas de projeto: Java 14 <code>case X -&gt;</code>, Go (cada caso termina sozinho), C# (proíbe cair), Rust <code>match</code> (<b>exaustivo</b>).</li></ul></div><div class="col" data-fit><span class="label g">CÓDIGO</span><pre class="code "><code>/* C: sem break, o controle "cai" */
+switch (index) {
+  case 1:
+  case 3: odd += 1;
+  case 2:
+  case 4: even += 1;
+  default: printf("Error\n");
+}  // index = 1: odd, even E erro!
+
+// Java 14+: switch como expressão
+String tipo = switch (dia) {
+  case SAB, DOM -&gt; "fim de semana";
+  case SEG, TER, QUA, QUI, SEX -&gt; "dia útil";
+};
+
+// Rust: match exaustivo
+match n { i32::MIN..=-1 =&gt; "negativo", 0 =&gt; "zero",
+          1..=9 =&gt; "um dígito", _ =&gt; "vários dígitos" }</code></pre></div></div>
+  <div class="ref">SEBESTA, 11. ed., §8.2, p. 330-341.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>O fio condutor: mecanismos que 'parecem certos' mas fazem outra coisa. Leve a turma a prever o que o switch de C imprime.</p><h4>Pontos que não podem faltar</h4><ul><li>Fall-through é uma escolha de projeto herdada do C.</li><li>O else pendente ainda é causa de bug em C/Java; chaves resolvem.</li><li>match exaustivo: esquecer um caso é erro de compilação.</li></ul><h4>Pergunta para a turma</h4><p>Como você descreveria, em uma frase, o que é fall-through e qual a sua consequência?</p><h4>Dica de estudo</h4><p>Nas abertas sobre switch, cite sempre um mecanismo alternativo e explique como ele elimina o problema.</p><p class="hintkey">Tempo sugerido: 3 min</p></aside>
+</section>
+
+<section class="slide" id="a07-laco" data-title="Laços, goto e comandos protegidos">
+  <header class="qh">
+    <div class="qn">07</div>
+    <div class="tt"><div class="qt">Laços, goto e comandos protegidos</div><div class="qs">Controle de fluxo e legibilidade</div></div>
+    <div class="chips"><span class="obj">§8.3-8.5, p. 342-355</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">IDEIA</span><ul class="pts"><li>Böhm e Jacopini (1966): sequência, seleção e laço lógico bastam; <b>goto não é necessário</b>. Dijkstra (1968): “goto é prejudicial”.</li><li><code>break</code>, <code>continue</code> e <code>return</code> são <b>gotos restritos</b>; Java tem <code>break</code> rotulado.</li><li><code>for ... in</code> (JS) percorre <b>chaves</b>; <code>for ... of</code> percorre <b>valores</b>.</li><li><b>Comandos protegidos</b> de Dijkstra: várias guardas verdadeiras → escolha não determinística (base do <code>select</code> de Go).</li></ul><div class="callout w"><b class="h">Casos reais</b>“goto fail” (Apple, 2014): um <code>goto fail;</code> duplicado pulou a verificação do certificado. Zune (2008): laço <code>while</code> sem progresso no último dia do ano bissexto.</div></div><div class="col" data-fit><span class="label g">CÓDIGO</span><pre class="code "><code>// JavaScript
+const notas = [10, 20, 30];
+let total = 0;
+for (const i in notas) total += i;
+console.log(total);   // "0012": chaves!
+total = 0;
+for (const v of notas) total += v;
+console.log(total);   // 60: valores
+
+// Java: break rotulado
+externo:
+for (int i = 0; i &lt; m.length; i++)
+    for (int j = 0; j &lt; m[i].length; j++)
+        if (m[i][j] &lt; 0) { break externo; }</code></pre></div></div>
+  <div class="ref">SEBESTA, 11. ed., §8.3-8.5, p. 342-355.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Use os dois casos reais para mostrar que o fluxo de controle é segurança e legibilidade, não só estilo.</p><h4>Pontos que não podem faltar</h4><ul><li>Goto sem restrição: difícil de ler e de verificar.</li><li>for...in x for...of em JS: exemplo clássico de pegadinha.</li><li>Laços lógicos precisam de progresso garantido: Zune.</li></ul><h4>Pergunta para a turma</h4><p>Que mecanismos do Go e do Rust teriam evitado o 'goto fail'?</p><h4>Dica de estudo</h4><p>As chaves obrigatórias e o aviso de endentação enganosa do compilador.</p><p class="hintkey">Tempo sugerido: 2 min</p></aside>
+</section>
+
+<section class="slide" id="q07" data-title="Pergunta-relâmpago · Aula 07">
+  <header class="qh">
+    <div class="qn">07</div>
+    <div class="tt"><div class="qt">Pergunta-relâmpago · Aula 07</div><div class="qs">Preveja a saída antes de revelar (tecla A)</div></div>
+    <div class="chips"><span class="obj">4 perguntas</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">PREVEJA</span><ol class="qz"><li>Python: <code>print(-2 ** 2, 2 ** 3 ** 2)</code><span class="ans">→ <code>-4 512</code></span></li><li>JavaScript: <code>console.log("5" - 2, "5" + 2)</code><span class="ans">→ <code>3 52</code> (menos converte; mais concatena)</span></li><li>C: <code>printf("%d\n", 3 &gt; 2 &gt; 1);</code><span class="ans">→ <code>0</code> ((3&gt;2) vale 1, e 1&gt;1 é falso)</span></li><li>Python: <code>x = 0; print(x or "padrão")</code><span class="ans">→ <code>padrão</code> (0 é falso; <code>or</code> devolve um operando)</span></li></ol></div><div class="col" data-fit><span class="label">PERGUNTE TAMBÉM</span><ul class="pts"><li>Qual regra de projeto explica cada saída?</li><li>Como corrigir ou tornar o código mais seguro?</li></ul><div class="callout b"><b class="h">Dica</b>Associe cada erro a uma <b>escolha de projeto</b>: precedência, coerção, valor de verdade, associatividade.</div></div></div>
+  <div class="ref">Quiz de abertura da Aula 07 (slide 4).</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>É o quiz de abertura da Aula 07. Peça palpites antes de revelar.</p><h4>Pontos que não podem faltar</h4><ul><li>1: ** vence o menos unário (-(2**2) = -4); ** é associativo à direita: 2**(3**2) = 512.</li><li>2: '-' converte para número (3); '+' concatena (52).</li><li>3: precedência/associatividade à esquerda; booleano em C é int.</li><li>4: 0 é falso; or devolve um dos operandos.</li></ul><p class="hintkey">Tempo sugerido: 2 min</p></aside>
+</section>
+
+<section class="slide cover sec" id="s08" data-title="Aula 08 · Subprogramas">
+  <div class="kicker">Aula 08 · Sebesta</div>
+  <h1>Subprogramas</h1>
+  <div class="sub2">Parâmetros · modos de passagem · fechamentos · pilha de execução</div>
+  <div class="meta"><span>Sebesta, caps. 9 e 10</span><span>p. 363-444</span></div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Abra com Mars Climate Orbiter (libra-força vs newton: erro de interface de US$ 125 milhões), left-pad (dependência) e a pilha da Toyota. Subprograma = reúso, mas a interface precisa ser clara.</p><h4>Pontos que não podem faltar</h4><ul><li>Subprograma tem uma entrada, o chamador fica suspenso e o controle volta.</li></ul><p class="hintkey">Tempo sugerido: 1 min</p></aside>
+</section>
+
+<section class="slide" id="a08-fund" data-title="Fundamentos e parâmetros">
+  <header class="qh">
+    <div class="qn">08</div>
+    <div class="tt"><div class="qt">Fundamentos e parâmetros</div><div class="qs">Formais, reais e o perfil do subprograma</div></div>
+    <div class="chips"><span class="obj">§9.2, p. 364-373</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">IDEIA</span><ul class="pts"><li>Cabeçalho: nome + <b>parâmetros formais</b>. Chamada: <b>parâmetros reais</b>.</li><li><b>Perfil</b> (assinatura): número, ordem e tipos dos parâmetros. <b>Protocolo</b>: perfil + tipo de retorno.</li><li>Parâmetros: posicionais, por <b>palavra-chave</b>, com <b>valor padrão</b> e <b>variádicos</b>.</li><li><b>Função</b>: o ideal é que o valor devolvido seja o único efeito.</li></ul><div class="callout w"><b class="h">Atenção</b>Python: valor padrão mutável (<code>lista=[]</code>) é criado <b>uma vez</b> e compartilhado.</div></div><div class="col" data-fit><span class="label g">CÓDIGO</span><pre class="code "><code># Python: formais x reais, palavra-chave e padrão
+def calcular_salario(renda, aliquota, dependentes=1):
+    return renda * (1 - aliquota) + 100 * dependentes
+
+calcular_salario(2000.0, 0.15)                 # posicional + padrão
+calcular_salario(aliquota=0.15, renda=2000.0)  # palavra-chave
+def media(*valores): ...                       # variádico
+
+def adicionar(item, lista=[]):   # lista criada UMA vez
+    lista.append(item)
+    return lista</code></pre></div></div>
+  <div class="ref">SEBESTA, 11. ed., §9.2, p. 364-373.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Faça uma tabela mental: Python (palavra-chave, padrão, variádico), Java (sem padrão; sobrecarga), C++ (padrão no fim). Não decore a tabela; entenda o porquê de cada recurso.</p><h4>Pontos que não podem faltar</h4><ul><li>Formal × real; perfil × protocolo.</li><li>Palavra-chave: qualquer ordem, mas exige conhecer os nomes.</li><li>Padrão mutável em Python: armadilha clássica.</li></ul><h4>Pergunta para a turma</h4><p>O que imprime adicionar(1) seguido de adicionar(2)?</p><p class="hintkey">Tempo sugerido: 2 min</p></aside>
+</section>
+
+<section class="slide" id="a08-pass" data-title="Modos e métodos de passagem">
+  <header class="qh">
+    <div class="qn">08</div>
+    <div class="tt"><div class="qt">Modos e métodos de passagem</div><div class="qs">Três modelos semânticos e cinco implementações</div></div>
+    <div class="chips"><span class="obj">§9.5, p. 376-384</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">MODELOS SEMÂNTICOS</span><ul class="pts"><li><b>Entrada</b> (in): vai na chamada.</li><li><b>Saída</b> (out): volta no retorno.</li><li><b>Entrada e saída</b> (inout): vai e volta.</li></ul><table class="t"><tr><th>Método</th><th>Modo</th><th>Característica</th></tr><tr><td>Valor</td><td>entrada</td><td>copia o valor; seguro; caro para dados grandes</td></tr><tr><td>Resultado</td><td>saída</td><td>copia de volta no fim</td></tr><tr><td>Valor-resultado</td><td>entrada e saída</td><td>duas cópias; sem apelidos</td></tr><tr><td>Referência</td><td>entrada e saída</td><td>passa o endereço; eficiente; <b>apelidos</b></td></tr><tr><td>Nome</td><td>entrada e saída</td><td>reavalia o texto a cada uso (ALGOL 60)</td></tr></table></div><div class="col" data-fit><span class="label g">NAS LINGUAGENS</span><table class="t"><tr><th>Linguagem</th><th>Como alterar a variável de quem chama</th></tr><tr><td>C</td><td>ponteiro: <code>f(&amp;x)</code> (sempre por valor)</td></tr><tr><td>C++</td><td>referência: <code>void f(int &amp;x)</code></td></tr><tr><td>Java</td><td>não dá para primitivos: devolva o valor</td></tr><tr><td>C#</td><td><code>ref</code> / <code>out</code></td></tr><tr><td>Python</td><td>por atribuição: devolva o novo valor</td></tr><tr><td>Go / Rust</td><td>ponteiro <code>&amp;x</code> / <code>&amp;mut x</code></td></tr></table></div></div>
+  <div class="ref">SEBESTA, 11. ed., §9.5, p. 376-384.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Separe <b>modelo semântico</b> (para onde vão os dados) de <b>implementação</b> (copiar ou passar caminho de acesso). A prova costuma pedir a saída de um trecho: é aqui que se decide.</p><h4>Pontos que não podem faltar</h4><ul><li>Valor: cópia; o chamador não vê a alteração do formal.</li><li>Referência: o formal é o mesmo endereço do real; alterar altera o original.</li><li>Em C, 'por referência' é simulada com ponteiro passado por valor.</li></ul><h4>Pergunta para a turma</h4><p>Por que 'troca(a, b)' em C só funciona com ponteiros?</p><p class="hintkey">Tempo sugerido: 2 min</p></aside>
+</section>
+
+<section class="slide" id="a08-java" data-title="Java passa tudo por valor">
+  <header class="qh">
+    <div class="qn">08</div>
+    <div class="tt"><div class="qt">Java passa tudo por valor</div><div class="qs">Cópia do valor, cópia da referência</div></div>
+    <div class="chips"><span class="obj">§9.5.4, p. 383-384</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">IDEIA</span><ul class="pts"><li><b>Primitivos</b>: copia-se o valor. O chamador nunca vê a alteração.</li><li><b>Objetos</b>: copia-se a <b>referência</b>. Dá para alterar o <b>conteúdo</b> do objeto, mas não trocar qual objeto o chamador enxerga.</li><li>Reatribuir o parâmetro (<code>p = new ...</code>) afeta só a cópia local.</li><li>Sebesta (p. 383): na prática, objetos parecem passados por referência, embora o mecanismo seja passagem por valor.</li></ul><div class="callout b"><b class="h">Python é parecido</b>Passagem <b>por atribuição</b>: listas mutáveis são alteradas pelo método; reatribuir o nome local não muda nada; <code>int</code> é imutável.</div></div><div class="col" data-fit><span class="label g">CÓDIGO</span><pre class="code "><code>static void troca(int a, int b)   { int t = a; a = b; b = t; }
+static void altera(Ponto p)       { p.x = 99; }
+static void reatribui(Ponto p)    { p = new Ponto(-1); }
+
+troca(x, y);        // x=1 y=2: troca só as cópias
+altera(p);          // p.x = 99: o OBJETO é compartilhado
+reatribui(p);       // p.x continua 99: a referência
+                    // do chamador não muda
+
+# Python
+def altera_lista(l): l.append(4)      # o chamador vê
+def reatribui(l):    l = [0, 0, 0]    # só o nome local muda
+def incrementa(n):   n = n + 1        # int é imutável</code></pre></div></div>
+  <div class="ref">SEBESTA, 11. ed., §9.5.4, p. 383-384.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Este é o ponto mais cobrado de subprogramas. Treine o raciocínio: 'o que é copiado? o valor ou a referência? o que o método faz com a cópia?'</p><h4>Pontos que não podem faltar</h4><ul><li>Alterar o conteúdo de um objeto: o chamador vê.</li><li>Reatribuir a referência/o parâmetro: o chamador não vê.</li><li>Primitivo: nunca muda para o chamador.</li></ul><h4>Pergunta para a turma</h4><p>Como um método Java 'devolve' dois valores ao chamador?</p><h4>Dica de estudo</h4><p>Em uma questão sobre saída, faça o passo a passo variável por variável.</p><p class="hintkey">Tempo sugerido: 3 min</p></aside>
+</section>
+
+<section class="slide" id="a08-fecha" data-title="Fechamentos (closures)">
+  <header class="qh">
+    <div class="qn">08</div>
+    <div class="tt"><div class="qt">Fechamentos (closures)</div><div class="qs">Subprograma + ambiente de referenciamento</div></div>
+    <div class="chips"><span class="obj">§9.12, p. 404-406</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">IDEIA</span><ul class="pts"><li><b>Fechamento</b> = subprograma <b>+ o ambiente</b> em que foi definido.</li><li>Captura a <b>variável</b> (a célula de memória), <b>não uma cópia</b> do valor.</li><li>As variáveis capturadas têm <b>extensão ilimitada</b>: vão para o <b>monte</b>, não para a pilha.</li><li>Usos: estado privado, <i>callbacks</i> com contexto, fábricas de funções.</li></ul><div class="callout w"><b class="h">Atenção</b>Em JavaScript, <code>var</code> tem uma só variável por função e <code>let</code> cria uma por volta do laço: o que o fechamento captura muda. Rever o slide 17 da Aula 08.</div></div><div class="col" data-fit><span class="label g">CÓDIGO</span><pre class="code "><code>// JavaScript: exemplo do livro (p. 405)
+function makeAdder(x) {
+  return function (y) { return x + y; };
+}
+const add10 = makeAdder(10);
+const add5  = makeAdder(5);
+add10(20);   // 30
+add5(20);    // 25
+
+// estado privado: sobrevive ao return!
+function criarContador() {
+  let n = 0;
+  return { inc: () =&gt; ++n, get: () =&gt; n };
+}
+const c = criarContador();
+c.inc(); c.inc();
+c.get();     // 2</code></pre></div></div>
+  <div class="ref">SEBESTA, 11. ed., §9.12, p. 404-406.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Explique o fechamento como 'a função leva a mochila das variáveis que usava'. A mochila vive no monte, porque a pilha da função que a criou já foi desempilhada.</p><h4>Pontos que não podem faltar</h4><ul><li>Captura de variável, não de valor.</li><li>Por que o monte: o registro de ativação da função externa some no retorno.</li><li>Quem suporta: JS, Python, C#, Go, Java (lambdas), Rust, C++11.</li></ul><h4>Pergunta para a turma</h4><p>Se o fechamento copiasse o valor, o que mudaria no contador?</p><h4>Dica de estudo</h4><p>Saiba explicar o que o fechamento captura em um laço com var e em um laço com let.</p><p class="hintkey">Tempo sugerido: 3 min</p></aside>
+</section>
+
+<section class="slide" id="a08-pilha" data-title="Pilha de execução e recursão">
+  <header class="qh">
+    <div class="qn">08</div>
+    <div class="tt"><div class="qt">Pilha de execução e recursão</div><div class="qs">Um registro de ativação por chamada</div></div>
+    <div class="chips"><span class="obj">§10.1-10.3, p. 416-427</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">IDEIA</span><ul class="pts"><li>Chamada: salvar estado, passar parâmetros e endereço de retorno, transferir o controle. Retorno: copiar saídas, restaurar estado, voltar.</li><li><b>Registro de ativação</b>: locais, parâmetros, ligação dinâmica e endereço de retorno.</li><li>Na <b>recursão</b>, várias ativações existem ao mesmo tempo; a mais recente fica no topo.</li><li>Sem caso base: <code>RecursionError</code> (Python), <code>StackOverflowError</code> (Java) ou segfault (C).</li><li>Variável <code>static</code> em C: lembra o valor entre chamadas; local automática, não.</li></ul></div><div class="col" data-fit><span class="label g">CÓDIGO</span><pre class="code "><code>int fatorial(int n) {
+    if (n &lt;= 1)
+        return 1;
+    return n * fatorial(n - 1);
+}
+// fatorial(3) empilha: fatorial(3) -&gt; fatorial(2) -&gt; fatorial(1)
+
+int contador(void) {
+    static int n = 0;   // estática: lembra o valor
+    return ++n;
+}
+// 3 chamadas: 1 2 3  (sem static: 1 1 1)</code></pre><div class="callout b"><b class="h">Dica</b>Recursão em cauda (Scheme garante) vira iteração e não cresce a pilha: Aula 12.</div></div></div>
+  <div class="ref">SEBESTA, 11. ed., §10.1-10.3, p. 416-427.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Desenhe a pilha no quadro para fatorial(3). A ideia: o último chamado é o primeiro a terminar.</p><h4>Pontos que não podem faltar</h4><ul><li>Uma IRA por ativação.</li><li>Local dinâmica da pilha × estática (<code>static</code>).</li><li>Estouro de pilha: recursão sem caso base.</li></ul><h4>Pergunta para a turma</h4><p>Quantas ativações de fatorial existem quando n = 1?</p><p class="hintkey">Tempo sugerido: 2 min</p></aside>
+</section>
+
+<section class="slide" id="q08" data-title="Pergunta-relâmpago · Aula 08">
+  <header class="qh">
+    <div class="qn">08</div>
+    <div class="tt"><div class="qt">Pergunta-relâmpago · Aula 08</div><div class="qs">Preveja a saída antes de revelar (tecla A)</div></div>
+    <div class="chips"><span class="obj">3 perguntas</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">PREVEJA</span><ol class="qz"><li>Python: <code>def adicionar(item, lista=[]): lista.append(item); return lista</code><br>chamadas: <code>adicionar(1)</code> e depois <code>adicionar(2)</code><span class="ans">→ <code>[1]</code> e depois <code>[1, 2]</code> (lista padrão compartilhada)</span></li><li>Python: <code>fs = [lambda: i for i in range(3)]</code><br><code>print([f() for f in fs])</code><span class="ans">→ <code>[2, 2, 2]</code> (captura a variável <code>i</code>, que vale 2 no fim)</span></li><li>C: <code>contador()</code> com <code>static int n = 0; return ++n;</code> chamado 3 vezes. O que a 3ª chamada devolve?<span class="ans">→ <code>3</code> (a variável estática lembra o valor)</span></li></ol></div><div class="col" data-fit><span class="label">PERGUNTE TAMBÉM</span><ul class="pts"><li>Qual conceito da aula explica cada saída?</li><li>Como evitar o problema (padrão <code>None</code>, valor padrão de cada iteração, etc.)?</li></ul><div class="callout b"><b class="h">Dica</b>Ligue cada saída a: valor padrão, fechamento ou extensão da variável.</div></div></div>
+  <div class="ref">Exercício em duplas da Aula 08 (exemplos/07_exercicio).</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Exercício em duplas da Aula 08. Deixe palpites antes de revelar.</p><h4>Pontos que não podem faltar</h4><ul><li>1: o valor padrão é avaliado uma vez, na definição.</li><li>2: fechamento captura a variável, não o valor.</li><li>3: variável static com extensão de programa.</li></ul><p class="hintkey">Tempo sugerido: 2 min</p></aside>
+</section>
+
+<section class="slide cover sec" id="s09" data-title="Aula 09 · TAD e orientação a objetos">
+  <div class="kicker">Aula 09 · Sebesta</div>
+  <h1>TAD e orientação a objetos</h1>
+  <div class="sub2">Encapsulamento · herança × composição · vinculação dinâmica · vtable</div>
+  <div class="meta"><span>Sebesta, caps. 11 e 12</span><span>p. 445-540</span></div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Casos reais: Y2K (sem encapsulamento, o ano de 2 dígitos estava espalhado), java.util.Stack herda de Vector e o núcleo do Linux faz vinculação dinâmica à mão com structs de ponteiros para função.</p><h4>Pontos que não podem faltar</h4><ul><li>TAD + herança + vinculação dinâmica = orientação a objetos.</li></ul><p class="hintkey">Tempo sugerido: 1 min</p></aside>
+</section>
+
+<section class="slide" id="a09-tad" data-title="Tipo abstrato de dados (TAD)">
+  <header class="qh">
+    <div class="qn">09</div>
+    <div class="tt"><div class="qt">Tipo abstrato de dados (TAD)</div><div class="qs">Representação oculta atrás de operações</div></div>
+    <div class="chips"><span class="obj">§11.2, p. 446-451</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">IDEIA</span><ul class="pts"><li>Um TAD satisfaz duas condições: (1) a <b>representação é oculta</b> dos clientes; (2) tipo e protocolos das operações ficam em <b>uma unidade sintática</b>.</li><li>Vantagens: <b>confiabilidade</b>, menos código para entender, menos conflito de nomes e <b>trocar a representação</b> sem mudar os clientes.</li><li>Operações da pilha: <code>create</code>, <code>destroy</code>, <code>empty</code>, <code>push</code>, <code>pop</code>, <code>top</code>.</li><li>Métodos de acesso: leitura sem escrita, validação no “setter” e liberdade para mudar a representação.</li></ul><div class="callout b"><b class="h">Ocultação nas linguagens</b>C++/Java/C#: <code>private</code>. Python: <code>_nome</code> por convenção. Go: inicial minúscula. Rust: privado por padrão, <code>pub</code> exporta. JS: <code>#campo</code>.</div></div><div class="col" data-fit><span class="label g">CÓDIGO</span><pre class="code "><code>// Java: representação privada
+class Pilha {
+    private int[] dados;
+    private int indiceTopo = -1;
+    Pilha(int capacidade) { dados = new int[capacidade]; }
+    public void empilhar(int x) { dados[++indiceTopo] = x; }
+    public boolean vazia() { return indiceTopo == -1; }
+}
+// p.indiceTopo = 5;   // erro: privado
+
+# Python: privado por convenção
+class Pilha:
+    def __init__(self): self._dados = []
+p._dados.insert(0, 999)    # funciona! nada é realmente privado</code></pre></div></div>
+  <div class="ref">SEBESTA, 11. ed., §11.2, p. 446-451.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Defina TAD pelos dois requisitos. Quando a prova pedir 'com base na definição de TAD', responda com: representação oculta + interface em uma unidade.</p><h4>Pontos que não podem faltar</h4><ul><li>Ocultação protege a invariante do tipo.</li><li>Python: a ocultação é só convenção.</li><li>Sem ocultação, mudar a representação quebra os clientes.</li></ul><h4>Pergunta para a turma</h4><p>O que o cliente pode (e não pode) fazer com uma pilha bem projetada?</p><h4>Dica de estudo</h4><p>Memorize as duas condições do TAD e as vantagens.</p><p class="hintkey">Tempo sugerido: 2 min</p></aside>
+</section>
+
+<section class="slide" id="a09-heran" data-title="Herança, composição e subtipos">
+  <header class="qh">
+    <div class="qn">09</div>
+    <div class="tt"><div class="qt">Herança, composição e subtipos</div><div class="qs">Reúso com personalização, mas com cuidado</div></div>
+    <div class="chips"><span class="obj">§12.2.2 e §12.3, p. 489-496</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">IDEIA</span><ul class="pts"><li><b>Herança</b>: a subclasse herda e sobrescreve; <code>protected</code> é visível às subclasses, <code>private</code> não.</li><li><b>Subtipo</b>: a subclasse pode <b>substituir</b> o pai sem mudar o comportamento esperado (princípio da substituição)?</li><li><b>Composição</b>: “tem um”. <b>Herança</b>: “é um”. Prefira composição quando a subclasse não honra o contrato do pai.</li></ul></div><div class="col" data-fit><span class="label g">CÓDIGO</span><pre class="code "><code># Python: o clássico Retangulo / Quadrado
+class Retangulo:
+    def __init__(self, l, a): self.l, self.a = l, a
+    def definir_largura(self, l): self.l = l
+    def area(self): return self.l * self.a
+
+class Quadrado(Retangulo):
+    def __init__(self, l): super().__init__(l, l)
+    def definir_largura(self, l): self.l = self.a = l
+
+def redimensiona(r):          # espera um Retangulo
+    r.definir_largura(4)
+    return r.area()
+
+redimensiona(Retangulo(2, 3))   # 12  (4 x 3)
+redimensiona(Quadrado(2))       # 16  (4 x 4): comportamento mudou!</code></pre><div class="callout w"><b class="h">Lição</b>Quadrado não é um subtipo seguro de Retangulo. Herdar só por reúso de código fere o contrato.</div></div></div>
+  <div class="ref">SEBESTA, 11. ed., §12.2.2 e §12.3, p. 489-496.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Mostre o contraste entre 'é um' e 'tem um'. O caso real da biblioteca Java (Stack herdando de Vector) aparece na Aula 09: peça que a turma explique por que é um mau projeto, usando a definição de TAD.</p><h4>Pontos que não podem faltar</h4><ul><li>Herança expõe a interface do pai: pode quebrar a ocultação do filho.</li><li>Princípio da substituição.</li><li>Composição: a classe guarda o objeto em campo privado e expõe só o necessário.</li></ul><h4>Pergunta para a turma</h4><p>Em que situação a herança é mais adequada que a composição?</p><h4>Dica de estudo</h4><p>Se a prova pedir um 'esqueleto de classe', escreva campo privado + construtor + operações do TAD.</p><p class="hintkey">Tempo sugerido: 3 min</p></aside>
+</section>
+
+<section class="slide" id="a09-poli" data-title="Polimorfismo e vinculação dinâmica">
+  <header class="qh">
+    <div class="qn">09</div>
+    <div class="tt"><div class="qt">Polimorfismo e vinculação dinâmica</div><div class="qs">Quem decide qual método roda?</div></div>
+    <div class="chips"><span class="obj">§12.2.3 e §12.3.4-12.3.7, p. 492-498</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">IDEIA</span><ul class="pts"><li><b>Referência polimórfica</b>: variável do tipo <code>Forma</code> aponta para um <code>Circulo</code>.</li><li><b>Vinculação dinâmica</b>: o método é escolhido em <b>execução</b>, pelo tipo do <b>objeto</b>.</li><li><b>Classe abstrata</b>: tem método só com protocolo; não instancia.</li><li>Java: dinâmico, exceto <code>static</code>, <code>private</code> e <code>final</code>. C++: só o que for <code>virtual</code>. Sem <code>virtual</code>, vale o tipo do ponteiro.</li></ul></div><div class="col" data-fit><span class="label g">CÓDIGO</span><pre class="code "><code>abstract class Forma {
+    abstract double area();
+    String descrever() {
+        return getClass().getSimpleName() + ": " + area();
+    }
+}
+class Circulo extends Forma { double area() { ... } }
+class Retangulo extends Forma { double area() { ... } }
+
+for (Forma f : formas)
+    System.out.println(f.descrever());   // chama a area() certa
+
+// C++: só virtual é dinâmico
+B b; A *p = &amp;b;
+p-&gt;estatico();   // A::estatico  (tipo do ponteiro)
+p-&gt;dinamico();   // B::dinamico  (tipo do objeto, virtual)</code></pre></div></div>
+  <div class="ref">SEBESTA, 11. ed., §12.2.3 e §12.3.4-12.3.7, p. 492-498.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>A pergunta-chave de qualquer questão de polimorfismo: <b>a decisão é tomada na compilação ou na execução?</b> Em Java, métodos de instância: execução; campos e métodos estáticos: compilação.</p><h4>Pontos que não podem faltar</h4><ul><li>Despacho dinâmico pelo tipo do objeto.</li><li>Em C++, sem virtual a ligação é estática.</li><li>Cuidado: campos não são polimórficos; <code>A x = new B(); x.nome</code> usa o tipo da variável.</li></ul><h4>Pergunta para a turma</h4><p>Na Aula 09, o que imprime x.nome + x.getNome() quando A x = new B() e ambas as classes têm o campo nome?</p><h4>Dica de estudo</h4><p>Exemplo do exercício da Aula 09 (resposta: A B).</p><p class="hintkey">Tempo sugerido: 3 min</p></aside>
+</section>
+
+<section class="slide" id="a09-vt" data-title="Por dentro: vtable, genéricos e OO sem classes">
+  <header class="qh">
+    <div class="qn">09</div>
+    <div class="tt"><div class="qt">Por dentro: vtable, genéricos e OO sem classes</div><div class="qs">Como o despacho dinâmico é implementado</div></div>
+    <div class="chips"><span class="obj">§12.5 e §11.5, p. 470-474 e 526-529</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">VTABLE</span><ul class="pts"><li>Cada objeto guarda um <b>ponteiro para a vtable</b> da sua classe.</li><li>A vtable tem um ponteiro por método virtual. Se a subclasse não sobrescreveu, a entrada aponta para o código do pai.</li><li><code>f.draw()</code> vira: seguir o ponteiro, pegar a entrada e chamar.</li><li>O núcleo do Linux faz isso à mão, com <code>struct</code> e ponteiros para função.</li></ul><div class="callout b"><b class="h">Genéricos (TADs parametrizados)</b>C++/Rust: uma cópia do código por tipo. Java: <b>apagamento de tipo</b>. C#: reificados. Go 1.18: restrições por interfaces.</div></div><div class="col" data-fit><span class="label g">OO SEM HERANÇA DE CLASSES</span><table class="t"><tr><th>Linguagem</th><th>Alternativa</th></tr><tr><td>Go</td><td>interfaces <b>implícitas</b> + composição (<i>embedding</i>)</td></tr><tr><td>Rust</td><td><code>trait</code> + <code>dyn Trait</code> para dinâmico</td></tr><tr><td>JavaScript</td><td>protótipos: objetos herdam de objetos</td></tr><tr><td>Ruby / Python</td><td>tudo é objeto; despacho sempre dinâmico</td></tr></table><div class="callout w"><b class="h">Resumo</b>Esconder: private/pub/convenção. Reutilizar: herança, interfaces, composição, traits. Despachar: sempre, por padrão ou com <code>virtual</code>.</div></div></div>
+  <div class="ref">SEBESTA, 11. ed., §12.5, p. 526-529; §11.5, p. 470-474.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Este slide é de aprofundamento: conecta o conceito (despacho dinâmico) à implementação (vtable). Útil para perguntas de 'como funciona por baixo'.</p><h4>Pontos que não podem faltar</h4><ul><li>vtable = tabela de ponteiros para métodos.</li><li>Genéricos: modelos de implementação diferentes (templates, apagamento, reificação).</li><li>OO sem herança de classes: Go e Rust.</li></ul><h4>Pergunta para a turma</h4><p>O que a vtable de B guarda para um método que B não sobrescreveu?</p><p class="hintkey">Tempo sugerido: 2 min</p></aside>
+</section>
+
+<section class="slide" id="q09" data-title="Pergunta-relâmpago · Aula 09">
+  <header class="qh">
+    <div class="qn">09</div>
+    <div class="tt"><div class="qt">Pergunta-relâmpago · Aula 09</div><div class="qs">Preveja antes de revelar (tecla A)</div></div>
+    <div class="chips"><span class="obj">3 perguntas</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">PREVEJA</span><ol class="qz"><li>Java: <code>class A { String nome = "A"; String getNome() { return nome; } }</code> e <code>class B extends A</code> com os mesmos membros e <code>nome = "B"</code>. <code>A x = new B(); System.out.println(x.nome + " " + x.getNome());</code><span class="ans">→ <code>A B</code> (campo: tipo da variável; método: tipo do objeto)</span></li><li>Python: <code>total = 0</code> como atributo de classe, <code>__init__</code> faz <code>Contador.total += 1; self.id = Contador.total</code>. Criam-se <code>a</code> e <code>b</code>. <code>print(a.id, b.id, a.total)</code><span class="ans">→ <code>1 2 2</code> (atributo de classe compartilhado)</span></li><li>Java: <code>static String quem()</code> em A e em B (que estende A). <code>A x = new B(); x.quem()</code> devolve?<span class="ans">→ <code>"A"</code> (método estático: ligação na compilação)</span></li></ol></div><div class="col" data-fit><span class="label">PERGUNTE TAMBÉM</span><ul class="pts"><li>A decisão foi tomada na <b>compilação</b> ou na <b>execução</b>?</li><li>Qual alternativa de projeto torna o código mais claro?</li></ul><div class="callout b"><b class="h">Dica</b>Separe sempre: campo × método, estático × de instância, <code>virtual</code> × não virtual.</div></div></div>
+  <div class="ref">Exercício em duplas da Aula 09 (exemplos/08_exercicio).</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Exercício da Aula 09: qual método é chamado? Peça palpites e discuta compilação × execução.</p><h4>Pontos que não podem faltar</h4><ul><li>1: campos não são polimórficos.</li><li>2: atributo de classe é compartilhado por todas as instâncias.</li><li>3: static é resolvido pelo tipo declarado.</li></ul><p class="hintkey">Tempo sugerido: 2 min</p></aside>
+</section>
+
+<section class="slide cover sec" id="s10" data-title="Aula 10 · Concorrência">
+  <div class="kicker">Aula 10 · Sebesta</div>
+  <h1>Concorrência</h1>
+  <div class="sub2">Tarefas · condição de corrida · impasse · semáforos, monitores e mensagens · async</div>
+  <div class="meta"><span>Sebesta, cap. 13</span><span>p. 541-594</span></div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Casos reais: Therac-25 (condição de corrida, mortes), apagão de 2003 nos EUA (corrida em sistema de alarmes) e Mars Pathfinder (inversão de prioridade). Concorrência falha em silêncio e às vezes.</p><h4>Pontos que não podem faltar</h4><ul><li>A frequência dos processadores parou de subir: o ganho agora vem de mais núcleos.</li></ul><p class="hintkey">Tempo sugerido: 1 min</p></aside>
+</section>
+
+<section class="slide" id="a10-corr" data-title="Tarefas, sincronização e condição de corrida">
+  <header class="qh">
+    <div class="qn">10</div>
+    <div class="tt"><div class="qt">Tarefas, sincronização e condição de corrida</div><div class="qs">Dados compartilhados sem proteção</div></div>
+    <div class="chips"><span class="obj">§13.2.1, p. 547-549</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">IDEIA</span><ul class="pts"><li><b>Tarefa</b>: unidade que pode executar concorrentemente; quem a inicia não espera que termine.</li><li><b>Concorrência física</b> (vários processadores) × <b>lógica</b> (intercalação em um processador).</li><li><b>Cooperação</b>: A espera B (produtor-consumidor). <b>Competição</b>: A e B querem o mesmo recurso: exige <b>exclusão mútua</b>.</li><li><b>Condição de corrida</b>: o resultado depende da ordem de execução. <code>contador++</code> é <b>ler, somar e gravar</b>: três passos, não um.</li></ul></div><div class="col" data-fit><span class="label g">EXEMPLO DO LIVRO (Figura 13.1)</span><table class="t"><tr><th>Ordem dos passos</th><th>TOTAL (começa em 3)</th></tr><tr><td>A inteira, depois B</td><td>8 (o correto)</td></tr><tr><td>B inteira, depois A</td><td>7</td></tr><tr><td>as duas leem 3; A grava por último</td><td>6</td></tr><tr><td>as duas leem 3; B grava por último</td><td>4</td></tr></table><pre class="code "><code>static int contador = 0;
+Runnable r = () -&gt; {
+    for (int i = 0; i &lt; 1_000_000; i++)
+        contador++;       // ler, somar, gravar
+};
+// duas threads executando r
+// esperado: 2000000   obtido: 1011017  (muda a cada execução)</code></pre></div></div>
+  <div class="ref">SEBESTA, 11. ed., §13.2.1, p. 547-549, Figura 13.1.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Mostre a tabela com os quatro resultados. O resultado certo é o menos provável. Rodar o programa várias vezes mostra saídas diferentes.</p><h4>Pontos que não podem faltar</h4><ul><li>Sem sincronização, o resultado depende da intercalação.</li><li>Atualizações perdidas: duas threads leem o mesmo valor.</li><li>A sincronização de competição exige exclusão mútua.</li></ul><h4>Pergunta para a turma</h4><p>Por que 'contador++' não é uma operação atômica?</p><p class="hintkey">Tempo sugerido: 3 min</p></aside>
+</section>
+
+<section class="slide" id="a10-imp" data-title="Impasse (deadlock)">
+  <header class="qh">
+    <div class="qn">10</div>
+    <div class="tt"><div class="qt">Impasse (deadlock)</div><div class="qs">Espera circular por recursos</div></div>
+    <div class="chips"><span class="obj">§13.2.1, p. 551</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">IDEIA</span><ul class="pts"><li><b>Impasse</b>: duas ou mais tarefas ficam bloqueadas, cada uma esperando um recurso que a outra segura. O programa <b>congela</b>, sem erro.</li><li>Causa típica: <b>espera circular</b> por travas adquiridas em ordens diferentes.</li><li><b>Soluções</b>: adquirir as travas <b>sempre na mesma ordem</b>; <code>tryLock</code> com tempo limite; trava única; passagem de mensagens.</li><li><b>Vivacidade</b> (p. 551): garantia de que o programa continua progredindo.</li></ul><div class="callout w"><b class="h">Corrida × impasse</b>Corrida <b>corrompe</b> dados em silêncio. Impasse <b>trava</b> o programa. Ferramentas diferentes: exclusão mútua resolve a corrida, mas mal usada <b>causa</b> impasse.</div></div><div class="col" data-fit><span class="label g">DIAGRAMA E CÓDIGO</span><svg class="diagram" viewBox="0 0 560 250" role="img" aria-label="Impasse: A tem X e quer Y; B tem Y e quer X">
+<defs><marker id="ar" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#d9532a"/></marker></defs>
+<rect x="20" y="20" width="150" height="62" rx="14" fill="#11817f"/><text x="95" y="58" font-size="22" font-weight="800" text-anchor="middle" style="fill:#fff">Tarefa A</text>
+<rect x="390" y="20" width="150" height="62" rx="14" fill="#11817f"/><text x="465" y="58" font-size="22" font-weight="800" text-anchor="middle" style="fill:#fff">Tarefa B</text>
+<rect x="20" y="170" width="150" height="62" rx="14" fill="#7a4cc2"/><text x="95" y="208" font-size="22" font-weight="800" text-anchor="middle" style="fill:#fff">recurso X</text>
+<rect x="390" y="170" width="150" height="62" rx="14" fill="#7a4cc2"/><text x="465" y="208" font-size="22" font-weight="800" text-anchor="middle" style="fill:#fff">recurso Y</text>
+<line x1="95" y1="170" x2="95" y2="88" stroke="#d9532a" stroke-width="3" marker-end="url(#ar)"/><text x="105" y="135" font-size="16">A tem X</text>
+<line x1="465" y1="170" x2="465" y2="88" stroke="#d9532a" stroke-width="3" marker-end="url(#ar)"/><text x="330" y="135" font-size="16">B tem Y</text>
+<line x1="170" y1="40" x2="384" y2="188" stroke="#142230" stroke-width="3" stroke-dasharray="7 5" marker-end="url(#ar)"/><text x="215" y="46" font-size="16" font-weight="700">A quer Y</text>
+<line x1="390" y1="40" x2="176" y2="188" stroke="#142230" stroke-width="3" stroke-dasharray="7 5" marker-end="url(#ar)"/><text x="365" y="46" font-size="16" font-weight="700" text-anchor="end">B quer X</text>
+</svg><pre class="code "><code>// Java: ordens opostas -&gt; impasse
+synchronized (X) { pausa();
+    synchronized (Y) { ... } }     // Tarefa A
+synchronized (Y) { pausa();
+    synchronized (X) { ... } }     // Tarefa B</code></pre></div></div>
+  <div class="ref">SEBESTA, 11. ed., §13.2.1, p. 551.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Use o diagrama: A segura X e quer Y; B segura Y e quer X. Ninguém avança. Quebrar a espera circular é a solução clássica.</p><h4>Pontos que não podem faltar</h4><ul><li>Impasse não gera erro: o programa simplesmente para.</li><li>Ordem global de aquisição quebra o ciclo.</li><li>tryLock/timeout detecta e desiste; mensagens evitam travas.</li></ul><h4>Pergunta para a turma</h4><p>Por que o impasse só aparece 'às vezes' em produção?</p><h4>Dica de estudo</h4><p>Saiba descrever, passo a passo, a sequência que leva ao impasse com duas contas bancárias.</p><p class="hintkey">Tempo sugerido: 3 min</p></aside>
+</section>
+
+<section class="slide" id="a10-mec" data-title="Semáforos, monitores e mensagens">
+  <header class="qh">
+    <div class="qn">10</div>
+    <div class="tt"><div class="qt">Semáforos, monitores e mensagens</div><div class="qs">Do mais primitivo ao mais abstrato</div></div>
+    <div class="chips"><span class="obj">§13.3-13.5, p. 552-560</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">MECANISMOS</span><table class="t"><tr><th>Mecanismo</th><th>Origem</th><th>Hoje em</th></tr><tr><td><b>Semáforos</b></td><td>Dijkstra, 1965</td><td><code>Semaphore</code> (Java), POSIX</td></tr><tr><td><b>Monitores</b></td><td>Brinch Hansen 1973, Hoare 1974</td><td><code>synchronized</code> (Java), <code>lock</code> (C#), Ada</td></tr><tr><td><b>Mensagens</b></td><td>Hoare (CSP), 1978</td><td>canais (Go, Rust), Ada, Erlang</td></tr></table><ul class="pts"><li><b>Semáforo</b> = contador + fila. <code>wait</code> decrementa ou bloqueia; <code>release</code> acorda ou incrementa. Fragilidade: esquecer um <code>release</code> causa impasse.</li><li><b>Monitor</b>: dados + operações juntos (como um TAD). Competição <b>automática</b>; cooperação manual (<code>wait</code>/<code>notifyAll</code>).</li><li><b>Mensagens</b>: sem memória compartilhada; <i>rendezvous</i>.</li></ul></div><div class="col" data-fit><span class="label g">CÓDIGO</span><pre class="code "><code>// Java: monitor
+synchronized void depositar(int v) throws InterruptedException {
+    while (ocupados == 3) wait();   // cooperação
+    ...
+    notifyAll();                     // acorda quem espera
+}
+// AtomicInteger: instrução atômica, sem bloqueio
+
+// Go: canais (CSP)
+ch := make(chan int)          // sem buffer: síncrono
+go produtor(5, ch)            // goroutine
+for v := range ch { soma += v }
+
+// Rust: o dado mora DENTRO do Mutex
+let contador = Arc::new(Mutex::new(0));
+// corrida de dados vira erro de compilação</code></pre></div></div>
+  <div class="ref">SEBESTA, 11. ed., §13.3-13.5, p. 552-560.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Posicione os três como níveis de abstração: quanto mais alto, menos erros e menos controle. Rust vai além: o compilador recusa a corrida de dados.</p><h4>Pontos que não podem faltar</h4><ul><li>Semáforo: poderoso, mas frágil.</li><li>Monitor: exclusão mútua automática.</li><li>Mensagens: nada compartilhado.</li><li>Rust: impasses ainda são possíveis.</li></ul><h4>Pergunta para a turma</h4><p>Qual mecanismo você escolheria para um serviço distribuído em várias máquinas? (Mensagens.)</p><p class="hintkey">Tempo sugerido: 3 min</p></aside>
+</section>
+
+<section class="slide" id="a10-async" data-title="Laço de eventos e async">
+  <header class="qh">
+    <div class="qn">10</div>
+    <div class="tt"><div class="qt">Laço de eventos e async</div><div class="qs">Uma thread, várias esperas</div></div>
+    <div class="chips"><span class="obj">Aula 10 · exemplos/06_async</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">IDEIA</span><ul class="pts"><li>JavaScript: <b>uma thread</b> e um <b>laço de eventos</b>; a E/S acontece “por fora” e os <i>callbacks</i> entram numa fila.</li><li><b>Microtarefas</b> (promises) rodam <b>antes</b> das tarefas (<code>setTimeout</code>), mesmo com tempo 0.</li><li><code>async/await</code> intercala esperas: concorrência <b>sem paralelismo</b>.</li><li><b>Não trave o laço</b>: trabalho pesado atrasa tudo.</li></ul><div class="callout b"><b class="h">Concorrência ≠ paralelismo</b>Async intercala esperas. Paralelismo exige vários núcleos.</div></div><div class="col" data-fit><span class="label g">CÓDIGO</span><pre class="code "><code>console.log("1: início");
+setTimeout(() =&gt; console.log("4: setTimeout"), 0);
+Promise.resolve().then(() =&gt; console.log("3: promise"));
+console.log("2: fim do código síncrono");
+// ordem: 1, 2, 3, 4
+
+await espera(300); await espera(300);        // ~600 ms
+await Promise.all([espera(300), espera(300)]); // ~300 ms</code></pre></div></div>
+  <div class="ref">Aula 10, exemplos/06_async; SEBESTA, 11. ed., cap. 13.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Fechamento do bloco: o quadro de modelos. Cada modelo evita a corrida de um jeito e tem seu risco residual.</p><h4>Pontos que não podem faltar</h4><ul><li>Ordem: síncrono, microtarefa, tarefa.</li><li>Async não usa vários núcleos.</li><li>Risco residual: travar o laço (JS), impasse (travas, canais, Rust).</li></ul><h4>Pergunta para a turma</h4><p>Qual é o risco residual de cada modelo?</p><h4>Dica de estudo</h4><p>Quadro de modelos: threads + travas (esquecer a trava, impasse); mensagens/CSP (impasse em canais); laço de eventos/async (travar o laço, sem paralelismo); tipos e posse em Rust (impasse ainda possível); atores (caixa de mensagens lotada).</p><p class="hintkey">Tempo sugerido: 2 min</p></aside>
+</section>
+
+<section class="slide" id="q10" data-title="Pergunta-relâmpago · Aula 10">
+  <header class="qh">
+    <div class="qn">10</div>
+    <div class="tt"><div class="qt">Pergunta-relâmpago · Aula 10</div><div class="qs">O que acontece? (tecla A revela)</div></div>
+    <div class="chips"><span class="obj">4 perguntas</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">PERGUNTE</span><ol class="qz"><li>JavaScript: <code>console.log("A"); setTimeout(() =&gt; console.log("B"), 0); Promise.resolve().then(() =&gt; console.log("C")); console.log("D");</code><span class="ans">→ <code>A D C B</code> (síncrono, microtarefa, tarefa)</span></li><li>Java: duas threads fazem <code>vendas++</code> 100.000 vezes cada, sem sincronizar. Sempre 200.000?<span class="ans">→ Não: <code>vendas++</code> são três passos; atualizações se perdem (condição de corrida). Corrigir: <code>synchronized</code>, atômico ou lock.</span></li><li>Go: <code>ch := make(chan int); ch &lt;- 1; fmt.Println(&lt;-ch)</code> (sem buffer)<span class="ans">→ impasse: o envio bloqueia esperando um receptor que nunca virá (“all goroutines are asleep”)</span></li><li>Rust: <code>let mut c = 0; thread::spawn(|| { c += 1; });</code><span class="ans">→ não compila: a thread pode viver mais que <code>c</code> e a corrida de dados é proibida</span></li></ol></div><div class="col" data-fit><span class="label">PERGUNTE TAMBÉM</span><ul class="pts"><li>É <b>corrida</b>, <b>impasse</b> ou outro problema?</li><li>Como corrigir?</li></ul><div class="callout b"><b class="h">Dica</b>Corrida: resultado errado e variável. Impasse: congela. Laço travado: tudo atrasa.</div></div></div>
+  <div class="ref">Exercício em duplas da Aula 10 (exemplos/07_exercicio).</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Exercício da Aula 10 (resumido). A tecla A revela as respostas.</p><h4>Pontos que não podem faltar</h4><ul><li>1: ordem do laço de eventos.</li><li>2: condição de corrida; o resultado muda a cada execução.</li><li>3: impasse em canal sem buffer.</li><li>4: Rust recusa a corrida de dados em compilação.</li></ul><p class="hintkey">Tempo sugerido: 2 min</p></aside>
+</section>
+
+<section class="slide cover sec" id="s12" data-title="Aula 12 · Paradigma funcional">
+  <div class="kicker">Aula 12 · Sebesta</div>
+  <h1>Paradigma funcional</h1>
+  <div class="sub2">Funções puras · lambda · map, filter, reduce · Scheme e Haskell · pipelines</div>
+  <div class="meta"><span>Sebesta, cap. 15</span><span>p. 631-686</span></div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Casos reais: MapReduce (inspirado no map e reduce do Lisp), WhatsApp (Erlang) e React/Redux (estado substituído, não alterado). O estilo funcional já está dentro do Java, do JavaScript, do Python e do Rust.</p><h4>Pontos que não podem faltar</h4><ul><li>O significado de uma expressão não depende do contexto (Backus, 1978).</li></ul><p class="hintkey">Tempo sugerido: 1 min</p></aside>
+</section>
+
+<section class="slide" id="a12-fund" data-title="Imperativo × funcional">
+  <header class="qh">
+    <div class="qn">12</div>
+    <div class="tt"><div class="qt">Imperativo × funcional</div><div class="qs">Funções puras e transparência referencial</div></div>
+    <div class="chips"><span class="obj">§15.1-15.3, p. 632-637</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">IDEIA</span><ul class="pts"><li><b>Imperativo</b>: variáveis e atribuição mudam o estado; repetição com laços; o resultado depende da ordem.</li><li><b>Funcional</b>: funções matemáticas; só valores; repetição por <b>recursão</b> e formas funcionais.</li><li><b>Função pura</b>: mesmo argumento, mesmo resultado, sem efeito colateral.</li><li><b>Transparência referencial</b>: a expressão pode ser trocada pelo seu valor.</li><li>Vantagens: testes simples, paralelização segura, cache (memoização). Empurre os efeitos (E/S, banco) para as <b>bordas</b>.</li></ul></div><div class="col" data-fit><span class="label g">CÓDIGO</span><pre class="code "><code># Impura: depende do estado
+contador = 0
+def proximo_id(prefixo):
+    global contador
+    contador += 1                  # efeito colateral
+    return f"{prefixo}-{contador}"
+
+# Pura: transparência referencial
+def cubo(x):
+    return x * x * x
+cubo(2) + cubo(2) == 2 * cubo(2) == 16   # True</code></pre><div class="callout b"><b class="h">Concorrência</b>Sem estado compartilhado, <b>não há condição de corrida</b>. Ligação direta com a Aula 10.</div></div></div>
+  <div class="ref">SEBESTA, 11. ed., §15.1-15.3, p. 632-637.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Contraste o modelo de von Neumann (memória que muda) com o da função matemática. Peça exemplos de funções puras e impuras no código dos alunos.</p><h4>Pontos que não podem faltar</h4><ul><li>Pura ≠ impura: efeito colateral = alterar algo fora do retorno.</li><li>Estado mutável: variáveis, acumuladores, contadores, listas alteradas.</li><li>Teste e paralelismo: ganhos práticos.</li></ul><h4>Pergunta para a turma</h4><p>O que torna proximo_id difícil de testar?</p><h4>Dica de estudo</h4><p>Quando pedir 'indique o estado mutável', aponte variáveis e acumuladores do laço.</p><p class="hintkey">Tempo sugerido: 3 min</p></aside>
+</section>
+
+<section class="slide" id="a12-forma" data-title="Lambda e formas funcionais">
+  <header class="qh">
+    <div class="qn">12</div>
+    <div class="tt"><div class="qt">Lambda e formas funcionais</div><div class="qs">map, filter e reduce</div></div>
+    <div class="chips"><span class="obj">§15.2, p. 633-636</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">IDEIA</span><ul class="pts"><li><b>Expressão lambda</b>: função sem nome (Church): <code>λ(x) x * x * x</code>.</li><li><b>Composição</b>: <code>h = f ∘ g</code>, ou seja, <code>h(x) = f(g(x))</code>.</li><li><b>Aplicar-a-todos</b> = <code>map</code>. <b>Redução</b> = <code>reduce</code> / <code>fold</code> / <code>sum</code>.</li><li><code>filter</code> seleciona os elementos que satisfazem um predicado.</li></ul><table class="t"><tr><th>Linguagem</th><th>A mesma lambda</th></tr><tr><td>Scheme</td><td><code>(lambda (x) (* x x x))</code></td></tr><tr><td>Haskell</td><td><code>\x -&gt; x * x * x</code></td></tr><tr><td>Python</td><td><code>lambda x: x * x * x</code></td></tr><tr><td>JavaScript</td><td><code>(x) =&gt; x * x * x</code></td></tr><tr><td>Java 8</td><td><code>x -&gt; x * x * x</code></td></tr><tr><td>Rust</td><td><code>|x| x * x * x</code></td></tr></table></div><div class="col" data-fit><span class="label g">CÓDIGO: O LAÇO VIRA PIPELINE</span><pre class="code "><code>// JavaScript: imperativo
+let soma = 0;
+for (let i = 1; i &lt;= 6; i++)
+  if (i % 2 === 0) soma += i * i;
+
+// funcional: sem laço, sem acumulador
+[1, 2, 3, 4, 5, 6]
+  .filter((n) =&gt; n % 2 === 0)
+  .map((n) =&gt; n * n)
+  .reduce((acc, n) =&gt; acc + n, 0);    // 56
+
+# Python: composição
+def compor(f, g): return lambda x: f(g(x))
+h = compor(lambda x: x + 2, lambda x: 3 * x)
+print(h(4))                            # 14</code></pre><div class="callout b"><b class="h">Receita</b>Para reescrever um laço: (1) o que ele <b>seleciona</b>? → filter; (2) o que <b>transforma</b>? → map; (3) como <b>combina</b>? → reduce.</div></div></div>
+  <div class="ref">SEBESTA, 11. ed., §15.2, p. 633-636; §15.10, p. 674-676.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>A receita filter-map-reduce resolve a maioria das reescritas. Mostre a equivalência passo a passo com o laço.</p><h4>Pontos que não podem faltar</h4><ul><li>Pipeline é composição de funções.</li><li>Em Java: Streams (filter, map, reduce, collect). Em Python: compreensões e map.</li><li>O resultado da soma dos quadrados dos pares de 1 a 6 é 56.</li></ul><h4>Pergunta para a turma</h4><p>Como você reescreveria um laço com 'if' e um acumulador?</p><h4>Dica de estudo</h4><p>Treine reescrever em pelo menos duas linguagens (JS e Java ou Python).</p><p class="hintkey">Tempo sugerido: 3 min</p></aside>
+</section>
+
+<section class="slide" id="a12-scheme" data-title="Scheme e Haskell em resumo">
+  <header class="qh">
+    <div class="qn">12</div>
+    <div class="tt"><div class="qt">Scheme e Haskell em resumo</div><div class="qs">Notação prefixa, listas, recursão e padrões</div></div>
+    <div class="chips"><span class="obj">§15.5 e §15.8, p. 641-671</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">SCHEME</span><ul class="pts"><li>Notação <b>prefixa</b>: <code>(+ 3 7 10 2)</code>; sem precedência.</li><li><code>define</code> vincula nome a valor (não é atribuição). Tudo é expressão: <code>if</code> e <code>cond</code> devolvem valores.</li><li>Listas: <code>'(A B C)</code>; <code>car</code> = primeiro, <code>cdr</code> = o resto, <code>cons</code> = constrói.</li><li><b>Padrão de recursão</b>: 1) lista vazia? 2) usa o <code>car</code>; 3) chama com o <code>cdr</code>.</li><li><b>Recursão em cauda</b> vira iteração (Scheme exige): não cresce a pilha.</li></ul><pre class="code "><code>(car '(A B C))      ; A
+(cdr '(A B C))      ; (B C)
+(cons 'A '(B C))    ; (A B C)
+
+(define (membro atm a_list)
+  (cond ((null? a_list) #f)
+        ((eq? atm (car a_list)) #t)
+        (else (membro atm (cdr a_list)))))</code></pre></div><div class="col" data-fit><span class="label g">HASKELL</span><ul class="pts"><li><b>Casamento de padrões</b>, <b>guardas</b> (<code>|</code>) e <b>inferência de tipos</b>; puro.</li><li><b>Compreensão de listas</b>: <code>[n * n | n &lt;- [1 .. 5]]</code>.</li><li><b>Currying</b>: função de vários parâmetros é cadeia de funções de um; <code>add5 = add 5</code>.</li><li><b>Avaliação preguiçosa</b>: calcula só quando precisa; permite listas infinitas.</li></ul><pre class="code "><code>fact 0 = 1                        -- padrão
+fact n = n * fact (n - 1)
+
+[1, 3 .. 11]                      -- [1,3,5,7,9,11]
+take 5 [2, 4 ..]                  -- [2,4,6,8,10]
+
+// JavaScript: currying manual
+const add = (a) =&gt; (b) =&gt; a + b;
+[1, 2, 3].map(add(1));            // [2,3,4]</code></pre></div></div>
+  <div class="ref">SEBESTA, 11. ed., §15.5, p. 641-659; §15.7-15.8, p. 661-671.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Não é preciso decorar sintaxe, mas é preciso entender o padrão de recursão de listas (vazia/car/cdr) e as ideias de currying e preguiça.</p><h4>Pontos que não podem faltar</h4><ul><li>car/cdr/cons; null?.</li><li>Recursão em cauda e pilha constante.</li><li>Haskell: padrões, guardas, inferência.</li><li>Preguiça: listas infinitas; Streams em Java, geradores em Python e iteradores em Rust são o equivalente.</li></ul><h4>Pergunta para a turma</h4><p>O que devolve (cdr '(A B C))? E (car (cdr '(A B C)))?</p><p class="hintkey">Tempo sugerido: 3 min</p></aside>
+</section>
+
+<section class="slide" id="a12-comp" data-title="Funcional × imperativo">
+  <header class="qh">
+    <div class="qn">12</div>
+    <div class="tt"><div class="qt">Funcional × imperativo</div><div class="qs">O que o livro diz e o que você já usa</div></div>
+    <div class="chips"><span class="obj">§15.10-15.11, p. 674-679</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">O QUE O LIVRO DIZ (§15.11)</span><table class="t"><tr><th>Critério</th><th>Funcional × imperativo</th></tr><tr><td>Legibilidade</td><td>esconde variáveis e laços</td></tr><tr><td>Tamanho</td><td>10% a 25% do imperativo, mas tamanho não mede produtividade</td></tr><tr><td>Velocidade</td><td>cerca de 2× mais lento (Wadler, 1998)</td></tr><tr><td>Concorrência</td><td>sem efeitos colaterais, é fácil paralelizar</td></tr><tr><td>Popularidade</td><td>todos aprendem primeiro o imperativo</td></tr></table></div><div class="col" data-fit><span class="label g">VOCÊ JÁ USA FUNCIONAL</span><ul class="pts"><li><b>Java</b>: lambdas e <i>Streams</i> (<code>map</code>, <code>filter</code>, <code>reduce</code>, <code>collect</code>); preguiçoso.</li><li><b>JavaScript</b>: métodos de array; <code>Object.freeze</code> e <i>spread</i> para valores novos.</li><li><b>Python</b>: <code>map</code>, <code>filter</code>, compreensões, <code>functools.partial</code>.</li><li><b>Rust</b>: iteradores preguiçosos, <code>fold</code>, imutável por padrão.</li></ul><pre class="code "><code>// C: como fazer       // Haskell: o que calcular
+int sum_cubes(int n) {   sumCubes n = sum (map (^3) [1 .. n])
+  int sum = 0;
+  for (int i = 1; i &lt;= n; i++)
+    sum += i * i * i;
+  return sum;
+}</code></pre></div></div>
+  <div class="ref">SEBESTA, 11. ed., §15.10-15.11, p. 674-679.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Encerre mostrando que o funcional já é do dia a dia. Lembre os custos (velocidade, memória) para uma resposta equilibrada em questões de 'vantagens e desvantagens'.</p><h4>Pontos que não podem faltar</h4><ul><li>Vantagens: legibilidade, teste, paralelismo.</li><li>Limites: desempenho, memória da preguiça, curva de aprendizado.</li><li>Código de livro e de IA precisa ser executado e testado: as linguagens evoluem.</li></ul><h4>Pergunta para a turma</h4><p>Em que casos você ainda preferiria o estilo imperativo?</p><p class="hintkey">Tempo sugerido: 2 min</p></aside>
+</section>
+
+<section class="slide" id="q12" data-title="Pergunta-relâmpago · Aula 12">
+  <header class="qh">
+    <div class="qn">12</div>
+    <div class="tt"><div class="qt">Pergunta-relâmpago · Aula 12</div><div class="qs">Preveja antes de revelar (tecla A)</div></div>
+    <div class="chips"><span class="obj">3 perguntas</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">PERGUNTE</span><ol class="qz"><li>Reescreva em estilo funcional, em JavaScript: soma dos quadrados dos números pares de <code>[1, 2, 3, 4, 5, 6]</code>.<span class="ans">→ <code>.filter(n =&gt; n % 2 === 0).map(n =&gt; n * n).reduce((a, n) =&gt; a + n, 0)</code> = 56</span></li><li>Scheme: <code>(car (cdr '(A B C)))</code><span class="ans">→ <code>B</code> (<code>cdr</code> devolve <code>(B C)</code>; <code>car</code> pega o primeiro)</span></li><li>Por que a função <code>proximo_id</code> (com variável global) não tem transparência referencial?<span class="ans">→ ela altera estado fora do retorno: duas chamadas iguais devolvem valores diferentes</span></li></ol></div><div class="col" data-fit><span class="label">PERGUNTE TAMBÉM</span><ul class="pts"><li>Quais elementos do código original eram <b>estado mutável</b>?</li><li>Que vantagens a versão funcional traz?</li></ul><div class="callout b"><b class="h">Dica</b>Sempre cite duas vantagens e relacione-as a <b>função pura</b> e <b>transparência referencial</b>.</div></div></div>
+  <div class="ref">Exercício em duplas da Aula 12 (exemplos/08_exercicio).</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Verifique se a turma consegue reescrever o laço sem rascunho. Peça que ditem o pipeline.</p><h4>Pontos que não podem faltar</h4><ul><li>1: filter, map, reduce.</li><li>2: (cdr '(A B C)) = (B C); car = B.</li><li>3: transparência referencial exige que a mesma entrada dê sempre a mesma saída.</li></ul><p class="hintkey">Tempo sugerido: 2 min</p></aside>
+</section>
+
+<section class="slide" id="int-tab" data-title="Quadro-resumo das escolhas de projeto">
+  <header class="qh">
+    <div class="qn">∑</div>
+    <div class="tt"><div class="qt">Quadro-resumo das escolhas de projeto</div><div class="qs">Mesmas perguntas, respostas diferentes</div></div>
+    <div class="chips"><span class="obj">Caps. 6 a 15</span></div>
+  </header>
+  <div class="qbody one" data-fit><div class="col" data-fit><span class="label g">COMPARAÇÃO</span><table class="t"><tr><th>Aspecto</th><th>C</th><th>Java</th><th>Go</th><th>Rust</th><th>Python</th></tr><tr><td>Índices</td><td>sem verificação</td><td>verificados</td><td>verificados</td><td>verificados</td><td>verificados</td></tr><tr><td>Memória</td><td>malloc/free</td><td>coleta de lixo</td><td>coleta de lixo</td><td>posse e empréstimo</td><td>coleta de lixo</td></tr><tr><td>Ausência de valor</td><td>NULL</td><td>null / Optional</td><td>nil</td><td>Option&lt;T&gt;</td><td>None</td></tr><tr><td>Conversões</td><td>implícitas</td><td>alargamento implícito</td><td>explícitas</td><td>explícitas</td><td>implícitas entre numéricos</td></tr><tr><td>Passagem</td><td>valor (ponteiro)</td><td>valor (referência)</td><td>valor (ponteiro)</td><td>posse / &amp;mut</td><td>por atribuição</td></tr><tr><td>OO</td><td>sem classes</td><td>classes + interfaces</td><td>composição + interfaces</td><td>traits</td><td>múltipla (MRO)</td></tr><tr><td>Concorrência</td><td>threads (biblioteca)</td><td>threads, synchronized, atômicos</td><td>goroutines e canais</td><td>Arc&lt;Mutex&gt;, Send/Sync</td><td>asyncio, threads</td></tr><tr><td>Funcional</td><td>ponteiros para função</td><td>lambdas e Streams</td><td>funções de 1ª classe</td><td>iteradores, fechamentos</td><td>lambda, compreensões</td></tr></table></div></div>
+  <div class="ref">Síntese das aulas 06 a 12.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Este quadro é o mapa mental do curso. Peça que a turma 'escolha uma linguagem' para um cenário (serviço de pagamentos, firmware, script) e justifique com três critérios.</p><h4>Pontos que não podem faltar</h4><ul><li>Cada linha é uma escolha de projeto com consequência para confiabilidade, legibilidade e escrita.</li><li>Na questão integradora: escolha explícita + três critérios de conteúdos diferentes + risco residual + mitigação.</li><li>Rust: mais segurança em compilação; Java: mais produtividade e ecossistema; C: controle total e risco máximo.</li></ul><h4>Pergunta para a turma</h4><p>Para um sistema de pagamentos concorrente, que linguagem e por quê?</p><h4>Dica de estudo</h4><p>Treine 'critério → conteúdo da aula → consequência' (por exemplo: índices verificados → Aula 06 → sem Heartbleed).</p><p class="hintkey">Tempo sugerido: 4 min</p></aside>
+</section>
+
+<section class="slide" id="int-abertas" data-title="Checklist de estudo">
+  <header class="qh">
+    <div class="qn">∑</div>
+    <div class="tt"><div class="qt">Checklist de estudo</div><div class="qs">Você consegue explicar, sem olhar?</div></div>
+    <div class="chips"><span class="obj">Autoavaliação</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">TIPOS E CONTROLE</span><ul class="pts"><li>Por que 0,1 + 0,2 não dá 0,3 e o que usar para dinheiro?</li><li>Ponteiro solto × variável do monte perdida; GC × posse.</li><li>Precedência, coerção e curto-circuito: preveja saídas.</li><li>Fall-through do <code>switch</code> e as alternativas de projeto.</li><li>Java passa tudo por valor: o que o chamador vê?</li><li>O que o fechamento captura e onde as variáveis ficam?</li></ul></div><div class="col" data-fit><span class="label g">OO, CONCORRÊNCIA E FUNCIONAL</span><ul class="pts"><li>Definição de TAD e por que herdar de uma estrutura mais ampla compromete a ocultação.</li><li>Composição × herança; vinculação dinâmica (Java × C++ sem <code>virtual</code>).</li><li>Corrida × impasse: sequência de eventos e duas soluções.</li><li>Função pura, transparência referencial e estado mutável.</li><li>Reescrever um laço como <code>filter</code> + <code>map</code> + <code>reduce</code>.</li><li>Escolher uma linguagem com três critérios e citar um risco residual.</li></ul></div></div>
+  <div class="ref">Use como lista de verificação antes da prova.</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Feche com a autoavaliação. Peça que a turma marque o que não consegue explicar e use o tempo restante para esclarecer.</p><h4>Pontos que não podem faltar</h4><ul><li>Se o aluno consegue explicar 'o porquê', o conceito está sólido.</li><li>Sugira estudar com os exemplos das pastas de cada aula (OneCompiler).</li><li>Atividades de autopesquisa das aulas (matrizes associativas, laços funcionais, corrotinas, etc.) aprofundam, mas não são o foco.</li></ul><h4>Pergunta para a turma</h4><p>Qual item você ainda não consegue explicar sem olhar?</p><h4>Dica de estudo</h4><p>Em duplas, expliquem em voz alta um item um para o outro.</p><p class="hintkey">Tempo sugerido: 5 min</p></aside>
+</section>
+
+<section class="slide" id="fim-rev" data-title="Dicas finais para a prova">
+  <header class="qh">
+    <div class="qn">✓</div>
+    <div class="tt"><div class="qt">Dicas finais para a prova</div><div class="qs">Estratégia de resolução</div></div>
+    <div class="chips"><span class="obj">Boa prova!</span></div>
+  </header>
+  <div class="qbody " data-fit><div class="col" data-fit><span class="label">ANTES</span><ul class="pts"><li>Leia todas as questões; comece pelas que domina.</li><li>Sublinhe o <b>verbo do comando</b>.</li><li>Gerencie o tempo: 15 min objetivas, 10 min por aberta, 10 min na integradora, 5 min de revisão.</li></ul></div><div class="col" data-fit><span class="label">DURANTE</span><ul class="pts"><li>Código: leia linha a linha e escreva o estado de cada variável.</li><li>Justifique: afirme, explique o mecanismo, evidencie, conclua.</li><li>Cite a <b>escolha de projeto</b> e sua consequência.</li><li>Não deixe itens a), b), c) em branco.</li></ul><div class="callout b"><b class="h">Lembrete</b>Mecanismo certo + justificativa curta vale mais que um texto longo sem foco.</div></div></div>
+  <div class="ref">Bons estudos!</div>
+  <aside class="notes"><h4>Fala sugerida</h4><p>Encerre com a estratégia e abra para perguntas. Aproveite para retomar a pergunta da abertura sobre a linguagem mais 'segura'.</p><h4>Pontos que não podem faltar</h4><ul><li>Prever saída: passo a passo.</li><li>Abertas: afirmar, justificar, evidenciar, concluir.</li><li>Tempo: não gastar mais de 10 min em uma única aberta.</li></ul><h4>Pergunta para a turma</h4><p>Alguma dúvida de aula que ficou sem resposta?</p><p class="hintkey">Tempo sugerido: 3 min</p></aside>
+</section>
+</div></div></div>
+
+<div id="prog"></div>
+<div id="notes" role="region" aria-label="Anotações do apresentador"></div>
+<div id="bar">
+  <button id="bprev" title="Slide anterior (←)" aria-label="Anterior">◀</button>
+  <span id="count">1 / 1</span>
+  <button id="bnext" title="Próximo slide (→)" aria-label="Próximo">▶</button>
+  <span class="sp"></span>
+  <button id="clock" title="Cronômetro regressivo de 90 min: clique ou tecla C para iniciar/pausar; Shift+R reinicia">⏱ 90:00</button>
+  <button id="bnotes" aria-pressed="false" title="Mostrar/ocultar anotações (N)">Notas (N)</button>
+  <button id="bpres" title="Abrir janela do apresentador (P)">Apresentador (P)</button>
+  <button id="bfull" title="Tela cheia (F)">Tela cheia (F)</button>
+  <button id="bhelp" title="Atalhos (?)">?</button>
+</div>
+<div id="help" role="dialog" aria-label="Atalhos"><div>
+  <h3>Atalhos</h3>
+  <dl>
+    <dt>→ ␣ PgDn</dt><dd>Próximo slide</dd>
+    <dt>← PgUp</dt><dd>Slide anterior</dd>
+    <dt>Home / End</dt><dd>Primeiro / último slide</dd>
+    <dt>N</dt><dd>Mostrar/ocultar as anotações do apresentador (não use com o projetor ligado)</dd>
+    <dt>P</dt><dd>Abrir a janela do apresentador (arraste-a para o monitor do professor)</dd>
+    <dt>C</dt><dd>Iniciar/pausar o cronômetro de 90 min (Shift+R reinicia)</dd>
+    <dt>A</dt><dd>Revelar/ocultar as respostas do slide de pergunta-relâmpago</dd>
+    <dt>F</dt><dd>Tela cheia</dd>
+    <dt>D</dt><dd>Alternar tema claro/escuro</dd>
+    <dt>Esc</dt><dd>Fechar esta ajuda</dd>
+  </dl>
+</div></div>
+<div id="toast"></div>
+
+<script>
+(function(){
+  var DW = 1280, DH = 720, BAR = 44, TOTAL = 90*60;
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var stage = document.getElementById('stage'), wrap = document.getElementById('wrap'), frame = document.getElementById('frame');
+  var notesEl = document.getElementById('notes'), clock = document.getElementById('clock');
+  var idx = 0, pres = null, remaining = TOTAL, running = false, tickId = null, idleId = null;
+
+  /* ----- realce de código (sem bibliotecas) ----- */
+  var KW = new Set('int double float char void boolean long short byte static final class extends new return if else for while switch case default break continue const let var function true false null try catch throw throws struct public private protected import unsigned sizeof this'.split(' '));
+  function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  document.querySelectorAll('pre.code code').forEach(function(el){
+    var re = /(\/\/[^\n]*)|("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*')|\b(\d+(?:\.\d+)?)\b|\b([A-Za-z_]\w*)\b/g;
+    el.innerHTML = esc(el.textContent).replace(re, function(m,c,s,n,w){
+      if(c) return '<i class="c">'+c+'</i>';
+      if(s) return '<i class="s">'+s+'</i>';
+      if(n) return '<i class="n">'+n+'</i>';
+      return KW.has(w) ? '<i class="k">'+w+'</i>' : m;
+    });
+  });
+
+  /* ----- ajuste automático do tamanho do texto ----- */
+  function fit(){
+    slides.forEach(function(s){
+      var boxes = s.querySelectorAll('[data-fit]');
+      boxes.forEach(function(b){
+        var k = 1; b.style.setProperty('--k', k);
+        b.querySelectorAll('pre.code').forEach(function(p){
+          p.style.fontSize = ''; p.style.whiteSpace = '';
+          if(p.scrollWidth > p.clientWidth + 1){
+            var r = p.clientWidth / p.scrollWidth * 0.97;
+            if(r >= 0.86){ p.style.fontSize = (0.76 * r).toFixed(3) + 'em'; }
+            else { p.style.fontSize = (0.76 * 0.86).toFixed(3) + 'em'; p.style.whiteSpace = 'pre-wrap'; }
+          }
+        });
+        var cols = b.classList.contains('col') ? [b] : Array.prototype.slice.call(b.querySelectorAll('.col'));
+        if(!cols.length) cols = [b];
+        function over(){ return cols.some(function(c){ return c.scrollHeight > c.clientHeight + 1; }) || b.scrollHeight > b.clientHeight + 1; }
+        while(over() && k > 0.55){ k = Math.round((k - 0.03)*100)/100; b.style.setProperty('--k', k); }
+      });
+    });
+  }
+
+  /* ----- escala do palco ----- */
+  function layout(){
+    var notesOn = notesEl.classList.contains('on');
+    var bottom = BAR + (notesOn ? Math.round(window.innerHeight*0.40) : 0);
+    frame.style.bottom = bottom + 'px';
+    var w = window.innerWidth, h = window.innerHeight - bottom;
+    var s = Math.min(w/DW, h/DH);
+    stage.style.transform = 'scale(' + s + ')';
+    wrap.style.width = (DW*s) + 'px'; wrap.style.height = (DH*s) + 'px';
+  }
+
+  /* ----- navegação ----- */
+  function show(n, noHash){
+    idx = Math.max(0, Math.min(slides.length-1, n));
+    slides.forEach(function(s,i){ s.classList.toggle('on', i===idx); s.setAttribute('aria-hidden', i===idx ? 'false' : 'true'); });
+    document.getElementById('count').textContent = (idx+1) + ' / ' + slides.length;
+    document.getElementById('prog').style.width = ((idx+1)/slides.length*100) + '%';
+    if(!noHash){ try{ history.replaceState(null,'','#'+(idx+1)); }catch(e){} }
+    renderNotes(); syncPresenter();
+  }
+  function notesHTML(i){
+    var a = slides[i] && slides[i].querySelector('aside.notes');
+    return a ? a.innerHTML : '<p><em>Sem anotações para este slide.</em></p>';
+  }
+  function renderNotes(){
+    notesEl.innerHTML = '<div class="nh">Anotações do apresentador · não exiba com o projetor ligado</div>' + notesHTML(idx);
+    notesEl.scrollTop = 0;
+  }
+  function next(){ show(idx+1); } function prev(){ show(idx-1); }
+
+  function toggleNotes(){
+    var on = !notesEl.classList.contains('on');
+    notesEl.classList.toggle('on', on);
+    document.getElementById('bnotes').setAttribute('aria-pressed', on ? 'true':'false');
+    layout();
+  }
+
+  /* ----- cronômetro ----- */
+  function fmt(t){ var m = Math.floor(t/60), s = t%60; return (m<10?'0':'')+m+':'+(s<10?'0':'')+s; }
+  function paintClock(){
+    clock.textContent = '⏱ ' + fmt(remaining);
+    clock.className = (running ? 'run ' : '') + (remaining <= 300 ? 'bad' : remaining <= 900 ? 'warn' : '');
+    if(pres && !pres.closed){ var pc = pres.document.getElementById('pclock'); if(pc) pc.textContent = fmt(remaining); }
+  }
+  function tick(){ if(remaining>0){ remaining--; } else { toggleClock(); toast('Tempo esgotado'); } paintClock(); }
+  function toggleClock(){
+    running = !running;
+    if(running){ tickId = setInterval(tick,1000); toast('Cronômetro iniciado'); }
+    else { clearInterval(tickId); toast('Cronômetro pausado'); }
+    paintClock();
+  }
+  function resetClock(){ running=false; clearInterval(tickId); remaining = TOTAL; paintClock(); toast('Cronômetro reiniciado'); }
+
+  /* ----- janela do apresentador ----- */
+  function openPresenter(){
+    if(pres && !pres.closed){ pres.focus(); return; }
+    pres = window.open('', 'prova_presenter', 'width=980,height=720');
+    if(!pres){ toast('Pop-up bloqueado: libere pop-ups ou use a tecla N'); return; }
+    var d = pres.document;
+    d.open();
+    d.write('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Apresentador · Revisão de Paradigmas</title><style>'
+      + 'body{margin:0;font:18px/1.5 "Segoe UI",system-ui,sans-serif;background:#0d151c;color:#e3eaf0;display:flex;flex-direction:column;height:100vh}'
+      + 'header{display:flex;gap:12px;align-items:center;padding:12px 18px;background:#142230;border-bottom:3px solid #ff7c50}'
+      + 'header b{font-size:20px;flex:1}#pclock{font:700 34px ui-monospace,Consolas,monospace;color:#ffb48f}'
+      + 'button{font:inherit;background:#1f3140;color:#e3eaf0;border:1px solid #38505f;border-radius:8px;padding:6px 14px;cursor:pointer}'
+      + 'main{flex:1;overflow:auto;padding:6px 22px 20px}h4{margin:14px 0 4px;color:#ffb48f}ul{padding-left:22px}li{margin:3px 0}'
+      + 'code{background:#1f3140;padding:1px 6px;border-radius:5px}.gab{background:#2a8550;color:#fff;border-radius:8px;padding:2px 10px;font-weight:700}'
+      + 'table{border-collapse:collapse}td,th{border:1px solid #38505f;padding:3px 8px;text-align:left}'
+      + 'footer{padding:10px 18px;background:#142230;color:#98a8b6;font-size:15px}</style></head><body>'
+      + '<header><button id="pp">◀</button><b id="pt"></b><button id="pn">▶</button><span id="pclock"></span></header>'
+      + '<main id="pm"></main><footer id="px"></footer></body></html>');
+    d.close();
+    d.getElementById('pp').onclick = prev; d.getElementById('pn').onclick = next;
+    d.addEventListener('keydown', onKey);
+    syncPresenter(); paintClock();
+  }
+  function syncPresenter(){
+    if(!pres || pres.closed) return;
+    var d = pres.document; if(!d.getElementById('pm')) return;
+    d.getElementById('pt').textContent = (idx+1) + '/' + slides.length + ' · ' + (slides[idx].getAttribute('data-title') || '');
+    d.getElementById('pm').innerHTML = notesHTML(idx);
+    d.getElementById('px').textContent = idx+1 < slides.length ? 'Próximo: ' + (slides[idx+1].getAttribute('data-title') || '') : 'Último slide';
+  }
+
+  /* ----- utilidades ----- */
+  var toastT;
+  function toast(msg){ var t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(function(){ t.classList.remove('on'); }, 1800); }
+  function fullscreen(){ if(document.fullscreenElement){ document.exitFullscreen(); } else if(document.documentElement.requestFullscreen){ document.documentElement.requestFullscreen(); } }
+  function theme(){
+    var r = document.documentElement, dark = r.getAttribute('data-theme') === 'dark' ||
+      (!r.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
+    r.setAttribute('data-theme', dark ? 'light' : 'dark');
+  }
+  function help(on){ document.getElementById('help').classList.toggle('on', on); }
+
+  function onKey(e){
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
+    var k = e.key;
+    if(k==='ArrowRight' || k==='PageDown' || k===' ' || k==='Enter'){ e.preventDefault(); next(); }
+    else if(k==='ArrowLeft' || k==='PageUp' || k==='Backspace'){ e.preventDefault(); prev(); }
+    else if(k==='Home'){ show(0); } else if(k==='End'){ show(slides.length-1); }
+    else if(k==='n' || k==='N'){ toggleNotes(); }
+    else if(k==='p' || k==='P'){ openPresenter(); }
+    else if(k==='c' || k==='C'){ toggleClock(); }
+    else if(k==='R'){ resetClock(); }
+    else if(k==='f' || k==='F'){ fullscreen(); }
+    else if(k==='d' || k==='D'){ theme(); }
+    else if(k==='a' || k==='A'){ slides[idx].classList.toggle('rev'); }
+    else if(k==='?'){ help(!document.getElementById('help').classList.contains('on')); }
+    else if(k==='Escape'){ help(false); }
+  }
+  document.addEventListener('keydown', onKey);
+
+  document.getElementById('bprev').onclick = prev; document.getElementById('bnext').onclick = next;
+  document.getElementById('bnotes').onclick = toggleNotes; document.getElementById('bpres').onclick = openPresenter;
+  document.getElementById('bfull').onclick = fullscreen; document.getElementById('bhelp').onclick = function(){ help(true); };
+  clock.onclick = toggleClock;
+  document.getElementById('help').onclick = function(){ help(false); };
+
+  var sx = null;
+  document.addEventListener('touchstart', function(e){ sx = e.touches[0].clientX; }, {passive:true});
+  document.addEventListener('touchend', function(e){ if(sx===null) return; var dx = e.changedTouches[0].clientX - sx; if(Math.abs(dx) > 60){ dx < 0 ? next() : prev(); } sx = null; }, {passive:true});
+
+  function wake(){ document.body.classList.remove('idle'); clearTimeout(idleId); idleId = setTimeout(function(){ document.body.classList.add('idle'); }, 3500); }
+  document.addEventListener('mousemove', wake); wake();
+
+  window.addEventListener('resize', layout);
+  window.addEventListener('hashchange', function(){ var n = parseInt(location.hash.slice(1),10); if(n) show(n-1, true); });
+  window.addEventListener('beforeunload', function(){ if(pres && !pres.closed) pres.close(); });
+
+  var start = parseInt(location.hash.slice(1),10);
+  layout(); show(start ? start-1 : 0, !start); paintClock();
+  fit();
+  if(document.fonts && document.fonts.ready){ document.fonts.ready.then(function(){ fit(); }); }
+  window.addEventListener('load', fit);
+})();
+</script>
+</body>
+</html>
